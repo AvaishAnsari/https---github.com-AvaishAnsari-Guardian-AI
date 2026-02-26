@@ -4,7 +4,7 @@ import { Transaction, UserProfile } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { MapPin, Smartphone, Clock, AlertCircle, Fingerprint, BrainCircuit, History, FileText, Download, ShieldAlert } from "lucide-react";
+import { MapPin, Smartphone, Clock, AlertCircle, Fingerprint, BrainCircuit, History, FileText, Download, ShieldAlert, Cpu, Database, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
       key={transaction.id}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-4"
+      className="space-y-6"
     >
       <Card className="cyber-card border-border/40 overflow-hidden relative scanline">
         <CardHeader className="bg-white/5 pb-4 border-b border-white/5">
@@ -227,6 +227,49 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
                 </Button>
               </div>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Model Governance Panel */}
+      <Card className="cyber-card border-accent/20 bg-accent/5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent flex items-center gap-2">
+            <Cpu className="w-4 h-4" />
+            AI Model Governance & Transparency
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <span className="text-[8px] font-mono text-muted-foreground uppercase">Model Type</span>
+              <p className="text-[10px] font-bold">Hybrid ML + Behavioral AI</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[8px] font-mono text-muted-foreground uppercase">Last Training</span>
+              <p className="text-[10px] font-bold">2025-05-18 04:30 UTC</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[8px] font-mono text-muted-foreground uppercase">Drift Status</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                <p className="text-[10px] font-bold text-emerald-500 uppercase">Stable</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[8px] font-mono text-muted-foreground uppercase">Uptime</span>
+              <p className="text-[10px] font-bold">99.99%</p>
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-accent/10 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[8px] text-muted-foreground uppercase font-mono">
+              <Database className="w-3 h-3" />
+              Source: Global Intelligence Mesh
+            </div>
+            <div className="flex items-center gap-2 text-[8px] text-accent uppercase font-mono animate-pulse">
+              <Activity className="w-3 h-3" />
+              Real-time weights adjusting...
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -33,58 +33,73 @@ export const MOCK_PROFILES: Record<string, UserProfile> = {
 export const INITIAL_TRANSACTIONS: Transaction[] = [
   {
     id: 'TX_101',
+    caseId: 'CASE-7721',
     userId: 'USER_001',
     userName: 'Rahul Sharma',
     amount: 500,
     location: 'Bangalore',
     device: 'iPhone 15',
-    timestamp: FIXED_TIMESTAMP,
+    timestamp: "2025-05-20T08:45:00Z",
     status: 'cleared',
+    investigationStatus: 'pending',
     riskScore: 5,
+    confidenceScore: 98,
+    category: 'Nominal',
     riskLevel: 'low',
     riskBreakdown: {
       amountRisk: 2,
       deviceRisk: 1,
       locationRisk: 1,
-      timeRisk: 1
+      timeRisk: 1,
+      patternRisk: 0
     },
     explanation: 'Transaction parameters align perfectly with established behavioral patterns. Amount is well within normal bounds, verified device used, and location is a frequent hotspot.'
   },
   {
     id: 'TX_103',
+    caseId: 'CASE-7722',
     userId: 'USER_003',
     userName: 'Michael Scott',
     amount: 850,
     location: 'New York',
     device: 'Surface Pro 9',
-    timestamp: FIXED_TIMESTAMP,
+    timestamp: "2025-05-20T09:12:00Z",
     status: 'pending',
+    investigationStatus: 'under_investigation',
     riskScore: 52,
+    confidenceScore: 91,
+    category: 'Geolocation Risk',
     riskLevel: 'medium',
     riskBreakdown: {
       amountRisk: 25,
       deviceRisk: 2,
       locationRisk: 15,
-      timeRisk: 10
+      timeRisk: 10,
+      patternRisk: 0
     },
     explanation: 'Moderate risk detected due to a significant deviation in transaction volume (4x average). While the device is recognized, the location shift to New York adds to the anomaly score.'
   },
   {
     id: 'TX_102',
+    caseId: 'CASE-7723',
     userId: 'USER_002',
     userName: 'Sarah Chen',
     amount: 12000,
     location: 'London',
     device: 'Unknown Android',
-    timestamp: FIXED_TIMESTAMP,
+    timestamp: "2025-05-20T09:55:00Z",
     status: 'flagged',
-    riskScore: 88,
+    investigationStatus: 'pending',
+    riskScore: 92,
+    confidenceScore: 96,
+    category: 'Behavioral Anomaly',
     riskLevel: 'high',
     riskBreakdown: {
       amountRisk: 38,
       deviceRisk: 18,
       locationRisk: 17,
-      timeRisk: 15
+      timeRisk: 15,
+      patternRisk: 4
     },
     explanation: 'Critical risk detected. Transaction amount is 2.6x the historical average. Conducted from an unrecognized Android device in London, which is outside the user\'s typical geographic footprint.'
   }
