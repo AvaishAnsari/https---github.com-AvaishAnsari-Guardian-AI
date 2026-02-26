@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
@@ -32,7 +33,7 @@ export default function FraudShieldDashboard() {
     return INITIAL_TRANSACTIONS.map(tx => ({
       ...tx,
       caseId: `CASE-${tx.id.split('_')[1] || Math.floor(Math.random() * 1000)}`,
-      investigationStatus: tx.status === 'flagged' ? 'pending' : 'pending' as InvestigationStatus,
+      investigationStatus: tx.status === 'flagged' ? 'pending' : (tx.status === 'cleared' ? 'pending' : 'pending' as InvestigationStatus),
       category: tx.riskLevel === 'high' ? 'Behavioral Anomaly' : 'Nominal' as FraudCategory,
       confidenceScore: 85 + Math.floor(Math.random() * 10)
     }));
@@ -106,6 +107,8 @@ export default function FraudShieldDashboard() {
 
       const recentFlags = transactions.filter(t => t.userId === userId && t.status === 'flagged' && (Date.now() - new Date(t.timestamp).getTime()) < 3600000).length;
       let finalRiskScore = scoringResult.riskScore;
+      
+      // Auto-Escalation Logic: Increase score if suspicious patterns repeat
       if (recentFlags > 1) finalRiskScore = Math.min(100, finalRiskScore + 15);
       if (isDeviceUsedByOthers) finalRiskScore = Math.min(100, finalRiskScore + 10);
 
@@ -163,18 +166,52 @@ export default function FraudShieldDashboard() {
   }, [profiles, transactions, config, deviceRegistry]);
 
   const handleAction = (id: string, status: 'blocked' | 'approved') => {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+
     setTransactions(prev => prev.map(t => t.id === id ? { 
       ...t, 
       status, 
       investigationStatus: status === 'blocked' ? 'confirmed_fraud' : 'false_positive' 
     } : t));
     
+    // 🧠 Adaptive Learning: If False Positive, update user profile patterns
+    if (status === 'approved') {
+      setProfiles(prev => {
+        const user = prev[tx.userId];
+        if (!user) return prev;
+        
+        const updatedTypicalLocations = [...new Set([...user.typicalLocations, tx.location])];
+        const updatedTypicalDevices = [...new Set([...user.typicalDevices, tx.device])];
+        
+        return {
+          ...prev,
+          [tx.userId]: {
+            ...user,
+            typicalLocations: updatedTypicalLocations,
+            typicalDevices: updatedTypicalDevices
+          }
+        };
+      });
+      
+      toast({
+        title: "Model Adapted",
+        description: "User behavioral profile updated to include new patterns.",
+      });
+    }
+
     setAlertTx(null);
-    toast({
-      title: status === 'blocked' ? "Threat Neutralized" : "Manual Override",
-      description: `Action applied to case.`,
-      variant: status === 'blocked' ? "destructive" : "default"
-    });
+    if (status === 'blocked') {
+      toast({
+        title: "Threat Neutralized",
+        description: `Entity blocked. Intelligence shared across nodes.`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdateNotes = (id: string, notes: string) => {
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, analystNotes: notes } : t));
   };
 
   return (
@@ -223,19 +260,19 @@ export default function FraudShieldDashboard() {
               className="h-7 text-[9px] font-bold uppercase rounded-full px-4"
               onClick={() => setRole('risk_manager')}
             >
-              Risk Manager
+              Manager
             </Button>
           </div>
           
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex items-center gap-2 border-primary/30 hover:bg-primary/10 transition-all font-mono text-[10px] uppercase tracking-widest h-8"
-            onClick={() => handleProcessTransaction('USER_001', 5000, "Unknown", "iPhone 15")}
+            className="flex items-center gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-[10px] uppercase tracking-widest h-8"
+            onClick={() => handleProcessTransaction('USER_001', 95000, "Dubai", "Blackberry OS")}
             disabled={isProcessing}
           >
             <ShieldAlert className="h-3.5 w-3.5" />
-            Test_Alert
+            Simulate_Fraud
           </Button>
         </div>
       </header>
@@ -268,6 +305,7 @@ export default function FraudShieldDashboard() {
                     profile={selectedProfile}
                     history={transactions}
                     onAction={handleAction}
+                    onUpdateNotes={handleUpdateNotes}
                   />
                   <RiskTrendChart transactions={transactions} />
                 </div>

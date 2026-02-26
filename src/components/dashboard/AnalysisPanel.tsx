@@ -23,9 +23,10 @@ interface AnalysisPanelProps {
   profile: UserProfile | null;
   history: Transaction[];
   onAction: (id: string, status: 'blocked' | 'approved') => void;
+  onUpdateNotes: (id: string, notes: string) => void;
 }
 
-export function AnalysisPanel({ transaction, profile, history, onAction }: AnalysisPanelProps) {
+export function AnalysisPanel({ transaction, profile, history, onAction, onUpdateNotes }: AnalysisPanelProps) {
   if (!transaction || !profile) {
     return (
       <Card className="h-full cyber-card border-dashed border-2 flex items-center justify-center min-h-[400px]">
@@ -206,7 +207,8 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
                <textarea 
                 className="w-full bg-white/5 border border-white/10 rounded p-2 text-xs font-mono min-h-[60px] focus:outline-none focus:border-primary/50"
                 placeholder="Enter case notes..."
-                defaultValue={transaction.analystNotes}
+                value={transaction.analystNotes || ""}
+                onChange={(e) => onUpdateNotes(transaction.id, e.target.value)}
                />
             </div>
             {transaction.investigationStatus === 'pending' && (
@@ -231,7 +233,6 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
         </CardContent>
       </Card>
 
-      {/* AI Model Governance Panel */}
       <Card className="cyber-card border-accent/20 bg-accent/5">
         <CardHeader className="pb-2">
           <CardTitle className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent flex items-center gap-2">
