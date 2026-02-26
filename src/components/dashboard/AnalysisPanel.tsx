@@ -1,11 +1,10 @@
-
 "use client";
 
 import { Transaction, UserProfile } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Info, MapPin, Smartphone, Clock, AlertCircle, Fingerprint, BrainCircuit } from "lucide-react";
+import { Info, MapPin, Smartphone, Clock, AlertCircle, Fingerprint, BrainCircuit, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { 
@@ -35,15 +34,20 @@ export function AnalysisPanel({ transaction, profile }: AnalysisPanelProps) {
 
   const isHighRisk = transaction.riskLevel === 'high';
 
-  // Dynamic Radar Chart Data based on features
-  const amountRatio = transaction.amount / profile.averageAmount;
   const radarData = [
-    { subject: 'Volume', A: Math.min(amountRatio * 20, 100), fullMark: 100 },
+    { subject: 'Volume', A: Math.min((transaction.amount / profile.averageAmount) * 20, 100), fullMark: 100 },
     { subject: 'Location', A: profile.typicalLocations.includes(transaction.location) ? 20 : 90, fullMark: 100 },
     { subject: 'Device', A: profile.typicalDevices.includes(transaction.device) ? 10 : 95, fullMark: 100 },
-    { subject: 'Temporal', A: 50, fullMark: 100 }, // Default/Mock for temporal
+    { subject: 'Temporal', A: 50, fullMark: 100 },
     { subject: 'Frequency', A: transaction.riskScore! > 50 ? 80 : 30, fullMark: 100 },
   ];
+
+  const breakdown = transaction.riskBreakdown || {
+    amountRisk: 0,
+    deviceRisk: 0,
+    locationRisk: 0,
+    timeRisk: 0
+  };
 
   return (
     <motion.div 
@@ -63,7 +67,7 @@ export function AnalysisPanel({ transaction, profile }: AnalysisPanelProps) {
             </div>
             <Badge className={cn(
               "text-[10px] px-2 py-0.5 font-bold uppercase tracking-tighter",
-              isHighRisk ? "bg-destructive text-white" : "bg-primary text-white"
+              transaction.status === 'blocked' ? "bg-destructive" : transaction.status === 'approved' ? "bg-emerald-500" : isHighRisk ? "bg-destructive" : "bg-primary"
             )}>
               {transaction.status}
             </Badge>
@@ -87,17 +91,24 @@ export function AnalysisPanel({ transaction, profile }: AnalysisPanelProps) {
                  )} />
                </div>
 
-               <div className="grid grid-cols-2 gap-3">
-                 <div className="p-3 rounded-lg bg-white/5 border border-white/5 space-y-1">
-                   <span className="text-[9px] font-mono text-muted-foreground uppercase">Baseline Mean</span>
-                   <span className="text-sm font-bold block">₹{profile.averageAmount.toLocaleString()}</span>
-                 </div>
-                 <div className="p-3 rounded-lg bg-white/5 border border-white/5 space-y-1">
-                   <span className="text-[9px] font-mono text-muted-foreground uppercase">Deviation Factor</span>
-                   <span className={cn(
-                     "text-sm font-bold block",
-                     amountRatio > 2 ? "text-destructive" : "text-emerald-500"
-                   )}>{amountRatio.toFixed(1)}x Normal</span>
+               {/* Risk Breakdown */}
+               <div className="space-y-3">
+                 <h5 className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Risk Variance Decomposition</h5>
+                 <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Amount", val: breakdown.amountRisk, max: 40 },
+                      { label: "Device", val: breakdown.deviceRisk, max: 20 },
+                      { label: "Location", val: breakdown.locationRisk, max: 20 },
+                      { label: "Time", val: breakdown.timeRisk, max: 20 },
+                    ].map((factor) => (
+                      <div key={factor.label} className="p-2 rounded bg-white/5 border border-white/5">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[8px] font-mono uppercase text-muted-foreground">{factor.label}</span>
+                          <span className="text-[9px] font-bold">{factor.val}/{factor.max}</span>
+                        </div>
+                        <Progress value={(factor.val / factor.max) * 100} className="h-0.5 bg-white/5" />
+                      </div>
+                    ))}
                  </div>
                </div>
             </div>
@@ -120,7 +131,6 @@ export function AnalysisPanel({ transaction, profile }: AnalysisPanelProps) {
                   />
                 </RadarChart>
               </ResponsiveContainer>
-              <div className="absolute inset-0 pointer-events-none border border-primary/10 rounded-full scale-90 opacity-20" />
             </div>
           </div>
 
@@ -128,7 +138,7 @@ export function AnalysisPanel({ transaction, profile }: AnalysisPanelProps) {
           <div className="space-y-3">
             <h4 className="text-[11px] font-bold uppercase tracking-widest text-accent flex items-center gap-2">
               <AlertCircle className="w-3.5 h-3.5" />
-              Neural XAI Explanation
+              Explainability Report
             </h4>
             <div className="p-4 rounded-lg bg-white/5 border border-white/5 italic text-xs text-foreground/80 leading-relaxed font-mono relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-accent" />
@@ -136,9 +146,9 @@ export function AnalysisPanel({ transaction, profile }: AnalysisPanelProps) {
             </div>
           </div>
 
-          {/* Verification Table */}
+          {/* Verification Checklist */}
           <div className="space-y-4">
-            <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Verification Checklist</h4>
+            <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Behavioral Fingerprint Check</h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { icon: MapPin, label: "GEO_LOCATION", val: transaction.location, ok: profile.typicalLocations.includes(transaction.location) },

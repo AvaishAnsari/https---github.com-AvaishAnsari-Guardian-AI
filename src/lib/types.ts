@@ -12,6 +12,13 @@ export interface UserProfile {
   };
 }
 
+export interface RiskBreakdown {
+  amountRisk: number;
+  deviceRisk: number;
+  locationRisk: number;
+  timeRisk: number;
+}
+
 export interface Transaction {
   id: string;
   userId: string;
@@ -22,8 +29,9 @@ export interface Transaction {
   timestamp: string;
   riskScore?: number;
   riskLevel?: RiskLevel;
+  riskBreakdown?: RiskBreakdown;
   explanation?: string;
-  status: 'pending' | 'flagged' | 'cleared';
+  status: 'pending' | 'flagged' | 'cleared' | 'blocked' | 'approved';
 }
 
 export interface EngineeredFeatures {
