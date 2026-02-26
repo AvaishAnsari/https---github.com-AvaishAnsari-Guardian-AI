@@ -39,9 +39,14 @@ export default function FraudShieldDashboard() {
     }));
   });
 
+  // Auto-select the first (usually high-risk) transaction to avoid empty center panel
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [alertTx, setAlertTx] = useState<Transaction | null>(null);
+
+  useEffect(() => {
+    if (transactions.length > 0 && !selectedTxId) {
+      setSelectedTxId(transactions[transactions.length - 1].id);
+    }
+  }, [transactions, selectedTxId]);
 
   const selectedTransaction = useMemo(() => transactions.find(t => t.id === selectedTxId) || null, [transactions, selectedTxId]);
   const selectedProfile = useMemo(() => selectedTransaction ? profiles[selectedTransaction.userId] : null, [profiles, selectedTransaction]);
@@ -108,7 +113,6 @@ export default function FraudShieldDashboard() {
       const recentFlags = transactions.filter(t => t.userId === userId && t.status === 'flagged' && (Date.now() - new Date(t.timestamp).getTime()) < 3600000).length;
       let finalRiskScore = scoringResult.riskScore;
       
-      // Auto-Escalation Logic: Increase score if suspicious patterns repeat
       if (recentFlags > 1) finalRiskScore = Math.min(100, finalRiskScore + 15);
       if (isDeviceUsedByOthers) finalRiskScore = Math.min(100, finalRiskScore + 10);
 
@@ -175,7 +179,6 @@ export default function FraudShieldDashboard() {
       investigationStatus: status === 'blocked' ? 'confirmed_fraud' : 'false_positive' 
     } : t));
     
-    // 🧠 Adaptive Learning: If False Positive, update user profile patterns
     if (status === 'approved') {
       setProfiles(prev => {
         const user = prev[tx.userId];
@@ -213,6 +216,9 @@ export default function FraudShieldDashboard() {
   const handleUpdateNotes = (id: string, notes: string) => {
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, analystNotes: notes } : t));
   };
+
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [alertTx, setAlertTx] = useState<Transaction | null>(null);
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden selection:bg-primary/30">
