@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Transaction, UserProfile } from "@/lib/types";
@@ -183,7 +184,7 @@ export function AnalysisPanel({ transaction, profile, history, onAction, onUpdat
                 User Activity Timeline
               </h4>
               <div className="space-y-2 max-h-[120px] overflow-y-auto pr-2 custom-scrollbar">
-                {userHistory.map((tx, i) => (
+                {userHistory.map((tx) => (
                   <div key={tx.id} className="flex items-center justify-between p-2 rounded bg-white/5 border border-white/5">
                     <div className="flex flex-col">
                       <span className="text-[8px] font-mono text-muted-foreground uppercase">{format(new Date(tx.timestamp), 'HH:mm:ss')}</span>
