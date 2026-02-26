@@ -60,47 +60,47 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     caseId: 'CASE-7722',
     userId: 'USER_003',
     userName: 'Michael Scott',
-    amount: 850,
+    amount: 2850,
     location: 'New York',
     device: 'Surface Pro 9',
     timestamp: "2025-05-20T09:12:00Z",
     status: 'pending',
     investigationStatus: 'under_investigation',
-    riskScore: 52,
+    riskScore: 58,
     confidenceScore: 91,
     category: 'Geolocation Risk',
     riskLevel: 'medium',
     riskBreakdown: {
-      amountRisk: 25,
+      amountRisk: 28,
       deviceRisk: 2,
-      locationRisk: 15,
+      locationRisk: 18,
       timeRisk: 10,
       patternRisk: 0
     },
-    explanation: 'Moderate risk detected due to a significant deviation in transaction volume (4x average). While the device is recognized, the location shift to New York adds to the anomaly score.'
+    explanation: 'Moderate risk detected due to a significant deviation in transaction volume (14x average). While the device is recognized, the location shift to New York adds to the anomaly score.'
   },
   {
     id: 'TX_102',
     caseId: 'CASE-7723',
     userId: 'USER_002',
     userName: 'Sarah Chen',
-    amount: 12000,
+    amount: 145000,
     location: 'London',
     device: 'Unknown Android',
     timestamp: "2025-05-20T09:55:00Z",
     status: 'flagged',
     investigationStatus: 'pending',
-    riskScore: 92,
-    confidenceScore: 96,
+    riskScore: 98,
+    confidenceScore: 99,
     category: 'Behavioral Anomaly',
     riskLevel: 'high',
     riskBreakdown: {
-      amountRisk: 38,
-      deviceRisk: 18,
-      locationRisk: 17,
+      amountRisk: 40,
+      deviceRisk: 20,
+      locationRisk: 20,
       timeRisk: 15,
-      patternRisk: 4
+      patternRisk: 3
     },
-    explanation: 'Critical risk detected. Transaction amount is 2.6x the historical average. Conducted from an unrecognized Android device in London, which is outside the user\'s typical geographic footprint.'
+    explanation: 'CRITICAL ALERT: Extreme transaction outlier detected. Amount of ₹1,45,000 is 32x the historical average of ₹4,500. Conducted from an unrecognized device in London (unusual location) at an anomalous time. High probability of account takeover.'
   }
 ];
