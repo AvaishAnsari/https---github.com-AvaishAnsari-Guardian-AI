@@ -12,11 +12,12 @@ import { StatCards } from "@/components/dashboard/StatCards";
 import { TransactionInputForm } from "@/components/dashboard/TransactionInputForm";
 import { RiskTrendChart } from "@/components/dashboard/RiskTrendChart";
 import { FraudAlertNotification } from "@/components/dashboard/FraudAlertNotification";
+import { SpatialHeatmap } from "@/components/dashboard/SpatialHeatmap";
 import { Button } from "@/components/ui/button";
 import { Shield, Radar, Zap, ShieldAlert, Cpu } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 export default function GuardianAIDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
@@ -197,21 +198,7 @@ export default function GuardianAIDashboard() {
                       <Radar className="w-4 h-4" />
                       Spatial Threat Heatmap
                     </h4>
-                    <div className="aspect-square bg-white/5 rounded-lg border border-white/5 flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--primary)_0%,_transparent_70%)]" />
-                      {selectedTransaction ? (
-                        <div className="relative w-full h-full p-4 flex flex-col items-center justify-center">
-                           <div className={cn(
-                             "w-32 h-32 rounded-full border-2 flex items-center justify-center text-[10px] font-black italic tracking-widest transition-all",
-                             selectedTransaction.riskLevel === 'high' ? "border-destructive text-destructive bg-destructive/5" : "border-primary text-primary bg-primary/5"
-                           )}>
-                             {selectedTransaction.riskLevel === 'high' ? "OUTLIER_DETECTED" : "SIGNATURE_MATCH"}
-                           </div>
-                        </div>
-                      ) : (
-                        <Cpu className="w-8 h-8 text-muted-foreground/20 animate-pulse" />
-                      )}
-                    </div>
+                    <SpatialHeatmap transaction={selectedTransaction} />
                   </motion.div>
 
                   <motion.div className="cyber-card p-5 rounded-xl space-y-4 border-border/40">
