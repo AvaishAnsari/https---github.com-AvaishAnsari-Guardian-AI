@@ -41,7 +41,7 @@ export function TransactionFeed({ transactions, onSelect }: TransactionFeedProps
             {highRiskTxs.map(tx => (
               <span key={tx.id} className="text-[9px] font-mono text-destructive font-bold uppercase flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" />
-                CRITICAL: {tx.userName} (₹{tx.amount}) - {tx.riskScore}% RISK
+                CRITICAL: {tx.userName} (₹{mounted ? tx.amount.toLocaleString() : tx.amount}) - {tx.riskScore}% RISK
               </span>
             ))}
             {highRiskTxs.length === 0 && (
@@ -95,7 +95,7 @@ export function TransactionFeed({ transactions, onSelect }: TransactionFeedProps
                 </div>
                 <div className="flex items-end justify-between">
                   <div className="flex flex-col">
-                    <span className="text-xl font-black tracking-tighter">₹{tx.amount.toLocaleString()}</span>
+                    <span className="text-xl font-black tracking-tighter">₹{mounted ? tx.amount.toLocaleString() : tx.amount}</span>
                     <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
                       <Radar className="w-2.5 h-2.5 opacity-50" />
                       {tx.location}

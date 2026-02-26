@@ -1,6 +1,6 @@
-
 "use client";
 
+import { useState, useEffect } from "react";
 import { Transaction, UserProfile } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,12 @@ interface AnalysisPanelProps {
 }
 
 export function AnalysisPanel({ transaction, profile, history, onAction, onUpdateNotes }: AnalysisPanelProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!transaction || !profile) {
     return (
       <Card className="h-full cyber-card border-dashed border-2 flex items-center justify-center min-h-[400px]">
@@ -187,8 +193,8 @@ export function AnalysisPanel({ transaction, profile, history, onAction, onUpdat
                 {userHistory.map((tx) => (
                   <div key={tx.id} className="flex items-center justify-between p-2 rounded bg-white/5 border border-white/5">
                     <div className="flex flex-col">
-                      <span className="text-[8px] font-mono text-muted-foreground uppercase">{format(new Date(tx.timestamp), 'HH:mm:ss')}</span>
-                      <span className="text-[10px] font-bold">₹{tx.amount.toLocaleString()}</span>
+                      <span className="text-[8px] font-mono text-muted-foreground uppercase">{mounted ? format(new Date(tx.timestamp), 'HH:mm:ss') : '--:--:--'}</span>
+                      <span className="text-[10px] font-bold">₹{mounted ? tx.amount.toLocaleString() : tx.amount}</span>
                     </div>
                     <Badge variant={tx.riskLevel === 'high' ? 'destructive' : 'outline'} className="text-[7px] h-3.5 px-1 uppercase">
                       {tx.riskLevel}

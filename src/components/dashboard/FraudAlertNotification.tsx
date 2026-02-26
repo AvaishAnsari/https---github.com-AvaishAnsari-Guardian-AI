@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Transaction } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,12 @@ interface FraudAlertNotificationProps {
 }
 
 export function FraudAlertNotification({ transaction, onClose, onAction }: FraudAlertNotificationProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!transaction) return null;
 
   return (
@@ -39,7 +46,7 @@ export function FraudAlertNotification({ transaction, onClose, onAction }: Fraud
             </div>
             <div className="space-y-1">
               <span className="text-[9px] font-bold text-muted-foreground uppercase flex items-center gap-1"><DollarSign className="w-3 h-3" /> Deviant Amount</span>
-              <p className="text-sm font-bold text-destructive">₹{transaction.amount.toLocaleString()}</p>
+              <p className="text-sm font-bold text-destructive">₹{mounted ? transaction.amount.toLocaleString() : transaction.amount}</p>
             </div>
             <div className="space-y-1">
               <span className="text-[9px] font-bold text-muted-foreground uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Location Vector</span>
