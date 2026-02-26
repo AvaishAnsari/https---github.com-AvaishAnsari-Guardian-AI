@@ -41,7 +41,33 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     timestamp: FIXED_TIMESTAMP,
     status: 'cleared',
     riskScore: 5,
-    riskLevel: 'low'
+    riskLevel: 'low',
+    riskBreakdown: {
+      amountRisk: 2,
+      deviceRisk: 1,
+      locationRisk: 1,
+      timeRisk: 1
+    },
+    explanation: 'Transaction parameters align perfectly with established behavioral patterns. Amount is well within normal bounds, verified device used, and location is a frequent hotspot.'
+  },
+  {
+    id: 'TX_103',
+    userId: 'USER_003',
+    userName: 'Michael Scott',
+    amount: 850,
+    location: 'New York',
+    device: 'Surface Pro 9',
+    timestamp: FIXED_TIMESTAMP,
+    status: 'pending',
+    riskScore: 52,
+    riskLevel: 'medium',
+    riskBreakdown: {
+      amountRisk: 25,
+      deviceRisk: 2,
+      locationRisk: 15,
+      timeRisk: 10
+    },
+    explanation: 'Moderate risk detected due to a significant deviation in transaction volume (4x average). While the device is recognized, the location shift to New York adds to the anomaly score.'
   },
   {
     id: 'TX_102',
@@ -54,6 +80,12 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     status: 'flagged',
     riskScore: 88,
     riskLevel: 'high',
-    explanation: 'Amount significantly higher than average. Transaction from a new device and unusual location (London).'
+    riskBreakdown: {
+      amountRisk: 38,
+      deviceRisk: 18,
+      locationRisk: 17,
+      timeRisk: 15
+    },
+    explanation: 'Critical risk detected. Transaction amount is 2.6x the historical average. Conducted from an unrecognized Android device in London, which is outside the user\'s typical geographic footprint.'
   }
 ];
