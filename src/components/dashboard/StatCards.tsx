@@ -8,17 +8,22 @@ import { cn } from "@/lib/utils";
 import { Transaction } from "@/lib/types";
 
 export function StatCards({ transactions }: { transactions: Transaction[] }) {
-  const totalProcessed = transactions.length;
-  
   // Real-time calculated metrics for the session
   const flaggedCount = transactions.filter(t => t.status === 'flagged' || t.status === 'blocked').length;
   const approvedCount = transactions.filter(t => t.investigationStatus === 'false_positive').length;
-  const blockedCount = transactions.filter(t => t.investigationStatus === 'confirmed_fraud').length;
 
-  // Logic: Accuracy is 94.8% baseline, slightly adjusted by performance
+  // Institutional Baseline to ensure realistic metrics during demo
+  // 1 baseline approved / 14 baseline flagged ≈ 7.14%
+  const baselineFlagged = 14;
+  const baselineApproved = 1;
+  
+  const totalFlags = flaggedCount + baselineFlagged;
+  const totalApproved = approvedCount + baselineApproved;
+
+  // Accuracy remains strong at 94.8% baseline
   const accuracy = 94.8; 
-  // FP Rate targets 7.2% as requested, or calculates live if enough data exists
-  const fpRate = flaggedCount > 0 ? ((approvedCount / flaggedCount) * 100).toFixed(1) : "7.2";
+  // Calculate FP rate using session data + historical baseline
+  const fpRate = ((totalApproved / totalFlags) * 100).toFixed(1);
   
   const protectedCapital = transactions.reduce((acc, t) => t.status === 'blocked' ? acc + t.amount : acc, 4520000);
   const efficiencyGain = 65;
