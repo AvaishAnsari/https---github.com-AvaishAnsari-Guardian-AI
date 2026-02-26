@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Shield, Radar, Wifi } from "lucide-react";
+import { Shield, Radar, Wifi, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface TransactionFeedProps {
@@ -21,14 +21,36 @@ export function TransactionFeed({ transactions, onSelect }: TransactionFeedProps
     setMounted(true);
   }, []);
 
+  const highRiskTxs = transactions.filter(t => t.riskLevel === 'high').slice(-5);
+
   return (
     <div className="flex flex-col h-full cyber-card rounded-xl overflow-hidden border-border/40">
-      <div className="p-4 border-b border-border/40 bg-card/40 flex items-center justify-between">
-        <h3 className="font-bold text-sm flex items-center gap-2 uppercase tracking-widest text-primary">
+      <div className="p-4 border-b border-border/40 bg-card/40 flex items-center justify-between overflow-hidden">
+        <h3 className="font-bold text-sm flex items-center gap-2 uppercase tracking-widest text-primary shrink-0">
           <Shield className="w-4 h-4" />
-          Neural Link Feed
+          Real-time Feed
         </h3>
-        <div className="flex items-center gap-2">
+        
+        {/* Ticker Stream for High Risk */}
+        <div className="flex-1 ml-4 overflow-hidden relative">
+          <motion.div 
+            animate={{ x: [200, -1000] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="flex gap-8 whitespace-nowrap"
+          >
+            {highRiskTxs.map(tx => (
+              <span key={tx.id} className="text-[9px] font-mono text-destructive font-bold uppercase flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                CRITICAL: {tx.userName} (₹{tx.amount}) - {tx.riskScore}% RISK
+              </span>
+            ))}
+            {highRiskTxs.length === 0 && (
+              <span className="text-[9px] font-mono text-emerald-500 uppercase tracking-widest opacity-40">SYSTEM_STATUS: NOMINAL // ALL_VECTORS_STABLE</span>
+            )}
+          </motion.div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 ml-2">
            <Wifi className="w-3 h-3 text-emerald-500 animate-pulse" />
            <span className="text-[9px] font-mono text-emerald-500 uppercase tracking-tighter">Live</span>
         </div>
@@ -44,17 +66,32 @@ export function TransactionFeed({ transactions, onSelect }: TransactionFeedProps
                 layout
                 onClick={() => onSelect(tx)}
                 className={cn(
-                  "group relative flex flex-col p-3 rounded-lg cursor-pointer transition-all border border-white/5 hover:border-white/10",
-                  tx.riskLevel === 'high' && "bg-destructive/5 border-destructive/20 hover:bg-destructive/10 risk-glow-high",
+                  "group relative flex flex-col p-3 rounded-lg cursor-pointer transition-all border border-white/5 hover:border-white/10 overflow-hidden",
+                  tx.riskLevel === 'high' && "bg-destructive/10 border-destructive/30 hover:bg-destructive/20 risk-glow-high",
                   tx.riskLevel === 'medium' && "bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10 risk-glow-medium",
                   tx.riskLevel === 'low' && "bg-emerald-500/5 border-emerald-500/10 hover:bg-emerald-500/10 risk-glow-low"
                 )}
               >
+                {/* Visual Flash for new High Risk */}
+                {tx.riskLevel === 'high' && idx === 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0.5 }}
+                    animate={{ opacity: 0 }}
+                    transition={{ duration: 1 }}
+                    className="absolute inset-0 bg-destructive/20 pointer-events-none"
+                  />
+                )}
+
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-xs text-foreground/80 truncate max-w-[120px]">{tx.userName}</span>
-                  <span className="text-[10px] font-mono text-muted-foreground opacity-60">
-                    {mounted ? format(new Date(tx.timestamp), 'HH:mm:ss') : '--:--:--'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[8px] font-mono text-muted-foreground opacity-40">
+                      {tx.caseId}
+                    </span>
+                    <span className="text-[10px] font-mono text-muted-foreground opacity-60">
+                      {mounted ? format(new Date(tx.timestamp), 'HH:mm:ss') : '--:--:--'}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-end justify-between">
                   <div className="flex flex-col">

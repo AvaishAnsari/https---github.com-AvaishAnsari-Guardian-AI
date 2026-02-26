@@ -1,6 +1,7 @@
 export type RiskLevel = 'low' | 'medium' | 'high';
 export type InvestigationStatus = 'pending' | 'under_investigation' | 'confirmed_fraud' | 'false_positive';
 export type FraudCategory = 'Behavioral Anomaly' | 'Pattern-Based Fraud' | 'Geolocation Risk' | 'Device Risk' | 'Velocity Risk' | 'Nominal';
+export type UserRole = 'analyst' | 'risk_manager';
 
 export interface UserProfile {
   userId: string;
@@ -40,6 +41,7 @@ export interface Transaction {
   status: 'pending' | 'flagged' | 'cleared' | 'blocked' | 'approved';
   investigationStatus: InvestigationStatus;
   analystNotes?: string;
+  crossUserFlag?: boolean; // New: Flag for suspicious device reuse
 }
 
 export interface EngineeredFeatures {
@@ -49,4 +51,13 @@ export interface EngineeredFeatures {
   newDevice: boolean;
   velocityAlert: boolean;
   structuringAlert: boolean;
+  deviceReuseAlert?: boolean; // New: Intelligence from other users
+}
+
+export interface SystemConfig {
+  thresholds: {
+    low: number;
+    medium: number;
+    high: number;
+  };
 }

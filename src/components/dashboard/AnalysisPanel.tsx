@@ -1,10 +1,10 @@
 "use client";
 
-import { Transaction, UserProfile, InvestigationStatus } from "@/lib/types";
+import { Transaction, UserProfile } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Info, MapPin, Smartphone, Clock, AlertCircle, Fingerprint, BrainCircuit, ShieldAlert, History, FileText } from "lucide-react";
+import { MapPin, Smartphone, Clock, AlertCircle, Fingerprint, BrainCircuit, History, FileText, Download, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { format } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 interface AnalysisPanelProps {
   transaction: Transaction | null;
@@ -40,25 +41,25 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
   const userHistory = history.filter(h => h.userId === transaction.userId).slice(-5).reverse();
 
   const radarData = [
-    { subject: 'Volume', A: Math.min((transaction.amount / profile.averageAmount) * 20, 100), fullMark: 100 },
-    { subject: 'Location', A: profile.typicalLocations.includes(transaction.location) ? 20 : 90, fullMark: 100 },
-    { subject: 'Device', A: profile.typicalDevices.includes(transaction.device) ? 10 : 95, fullMark: 100 },
-    { subject: 'Pattern', A: transaction.category === 'Pattern-Based Fraud' ? 95 : 20, fullMark: 100 },
-    { subject: 'Temporal', A: 40, fullMark: 100 },
+    { subject: 'Volume', A: Math.min((transaction.amount / profile.averageAmount) * 20, 100) },
+    { subject: 'Location', A: profile.typicalLocations.includes(transaction.location) ? 20 : 90 },
+    { subject: 'Device', A: profile.typicalDevices.includes(transaction.device) ? 10 : 95 },
+    { subject: 'Pattern', A: transaction.category !== 'Nominal' ? 95 : 20 },
+    { subject: 'Network', A: transaction.crossUserFlag ? 95 : 10 },
   ];
 
-  const breakdown = transaction.riskBreakdown || {
-    amountRisk: 0,
-    deviceRisk: 0,
-    locationRisk: 0,
-    timeRisk: 0,
-    patternRisk: 0
+  const handleDownloadReport = () => {
+    toast({
+      title: "Generating Report",
+      description: `Fraud Intelligence Report for Case ${transaction.caseId} compiled.`,
+    });
   };
 
   return (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
+      key={transaction.id}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       className="space-y-4"
     >
       <Card className="cyber-card border-border/40 overflow-hidden relative scanline">
@@ -75,6 +76,9 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
               </div>
             </div>
             <div className="flex gap-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={handleDownloadReport}>
+                <Download className="w-4 h-4" />
+              </Button>
               <Badge className={cn(
                 "text-[9px] px-2 py-0.5 font-bold uppercase",
                 transaction.investigationStatus === 'confirmed_fraud' ? "bg-destructive" : transaction.investigationStatus === 'false_positive' ? "bg-emerald-500" : "bg-amber-500"
@@ -85,13 +89,23 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
           </div>
         </CardHeader>
         <CardContent className="pt-6 space-y-8">
+          {transaction.crossUserFlag && (
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="p-2 bg-destructive/10 border border-destructive/20 rounded flex items-center gap-2 text-destructive"
+            >
+              <ShieldAlert className="w-4 h-4 animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">NETWORK INTELLIGENCE ALERT: Suspicious Device Reuse Detected</span>
+            </motion.div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            {/* Score Visualization */}
             <div className="space-y-6">
                <div className="relative">
                  <div className="flex justify-between items-end mb-2">
                    <div className="flex flex-col">
-                     <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Global Risk Probability</span>
+                     <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Aggregate Risk Score</span>
                      <span className={cn(
                        "text-5xl font-black italic tracking-tighter",
                        isHighRisk ? "text-destructive" : "text-primary"
@@ -108,16 +122,15 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
                  )} />
                </div>
 
-               {/* Risk Breakdown */}
                <div className="space-y-3">
                  <h5 className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Risk Variance Decomposition</h5>
                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {[
-                      { label: "Amount", val: breakdown.amountRisk, max: 30 },
-                      { label: "Device", val: breakdown.deviceRisk, max: 15 },
-                      { label: "Location", val: breakdown.locationRisk, max: 15 },
-                      { label: "Time", val: breakdown.timeRisk, max: 10 },
-                      { label: "Pattern", val: breakdown.patternRisk || 0, max: 30 },
+                      { label: "Amount", val: transaction.riskBreakdown?.amountRisk || 0, max: 30 },
+                      { label: "Device", val: transaction.riskBreakdown?.deviceRisk || 0, max: 15 },
+                      { label: "Location", val: transaction.riskBreakdown?.locationRisk || 0, max: 15 },
+                      { label: "Time", val: transaction.riskBreakdown?.timeRisk || 0, max: 10 },
+                      { label: "Pattern", val: transaction.riskBreakdown?.patternRisk || 0, max: 30 },
                     ].map((factor) => (
                       <div key={factor.label} className="p-2 rounded bg-white/5 border border-white/5">
                         <div className="flex justify-between items-center mb-1">
@@ -131,7 +144,6 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
                </div>
             </div>
 
-            {/* Radar Analysis */}
             <div className="h-[240px] relative">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
@@ -153,7 +165,6 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* AI Reasoning */}
             <div className="space-y-3">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-accent flex items-center gap-2">
                 <AlertCircle className="w-3.5 h-3.5" />
@@ -165,7 +176,6 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
               </div>
             </div>
 
-            {/* Transaction Timeline */}
             <div className="space-y-3">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
                 <History className="w-3.5 h-3.5" />
@@ -187,34 +197,6 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
             </div>
           </div>
 
-          {/* Verification Checklist */}
-          <div className="space-y-4">
-            <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Identity & Pattern Vectors</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              {[
-                { icon: MapPin, label: "GEO_LOCATION", val: transaction.location, ok: profile.typicalLocations.includes(transaction.location) },
-                { icon: Smartphone, label: "DEVICE_ID", val: transaction.device, ok: profile.typicalDevices.includes(transaction.device) },
-                { icon: Clock, label: "TIME_WINDOW", val: `${profile.typicalTimeRange.start}-${profile.typicalTimeRange.end}`, ok: true },
-                { icon: History, label: "PATTERN_VLD", val: transaction.category === 'Nominal' ? "Valid" : "Anomaly", ok: transaction.category === 'Nominal' },
-              ].map((item, i) => (
-                <div key={i} className="p-2.5 rounded border border-white/5 bg-white/5 space-y-2">
-                  <div className="flex items-center gap-2 opacity-50">
-                    <item.icon className="w-3 h-3" />
-                    <span className="text-[9px] font-mono font-bold uppercase tracking-tighter">{item.label}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold truncate max-w-[80px]">{item.val}</span>
-                    <div className={cn(
-                      "w-2 h-2 rounded-full",
-                      item.ok ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]"
-                    )} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Analyst Workflow */}
           <div className="pt-4 border-t border-white/5 flex flex-col gap-4">
             <div className="space-y-2">
                <label className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-2">
@@ -234,14 +216,14 @@ export function AnalysisPanel({ transaction, profile, history, onAction }: Analy
                   className="flex-1 border-white/10 hover:bg-emerald-500/10 hover:text-emerald-500 font-bold uppercase text-[10px]"
                   onClick={() => onAction(transaction.id, 'approved')}
                 >
-                  Confirm: False Positive
+                  Approve: False Positive
                 </Button>
                 <Button 
                   variant="destructive" 
                   className="flex-1 font-bold uppercase text-[10px]"
                   onClick={() => onAction(transaction.id, 'blocked')}
                 >
-                  Confirm: Fraudulent
+                  Block: Confirm Fraud
                 </Button>
               </div>
             )}
