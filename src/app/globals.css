@@ -1,10 +1,37 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    --background: 0 0% 100%;
+    --foreground: 245 25% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 245 25% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 245 25% 10%;
+    --primary: 249 92% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 245 15% 96%;
+    --secondary-foreground: 245 25% 10%;
+    --muted: 245 15% 96%;
+    --muted-foreground: 245 10% 40%;
+    --accent: 200 100% 71%;
+    --accent-foreground: 245 15% 13%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 245 15% 90%;
+    --input: 245 15% 90%;
+    --ring: 249 92% 57%;
+    --radius: 0.75rem;
+    --chart-1: 249 92% 57%;
+    --chart-2: 200 100% 71%;
+    --chart-3: 280 65% 60%;
+    --chart-4: 160 60% 45%;
+    --chart-5: 30 80% 55%;
+  }
+
+  .dark {
     --background: 245 25% 6%;
     --foreground: 0 0% 98%;
     --card: 245 25% 10%;
@@ -24,7 +51,6 @@
     --border: 245 15% 18%;
     --input: 245 15% 18%;
     --ring: 249 92% 57%;
-    --radius: 0.75rem;
     --chart-1: 249 92% 57%;
     --chart-2: 200 100% 71%;
     --chart-3: 280 65% 60%;
@@ -42,14 +68,18 @@
     background-image: 
       radial-gradient(at 0% 0%, hsla(249, 92%, 57%, 0.05) 0, transparent 50%),
       radial-gradient(at 100% 0%, hsla(200, 100%, 71%, 0.05) 0, transparent 50%),
-      linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+      linear-gradient(rgba(120, 120, 120, 0.01) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120, 120, 120, 0.01) 1px, transparent 1px);
     background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
   }
 }
 
 .cyber-card {
-  @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl;
+  @apply bg-card/60 backdrop-blur-xl border border-foreground/5 shadow-2xl;
+}
+
+.dark .cyber-card {
+  @apply border-white/5;
   box-shadow: 0 0 40px -10px rgba(0, 0, 0, 0.5);
 }
 
@@ -89,4 +119,15 @@
 
 .animate-pulse-soft {
   animation: pulse-soft 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsla(var(--foreground), 0.1);
+  border-radius: 10px;
 }

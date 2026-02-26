@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Transaction, UserProfile, InvestigationStatus, FraudCategory, SystemConfig, UserRole } from "@/lib/types";
 import { INITIAL_TRANSACTIONS, MOCK_PROFILES } from "@/lib/mock-data";
-import { engineerFeatures, getRiskLevel } from "@/lib/feature-engineering";
+import { engineerFeatures } from "@/lib/feature-engineering";
 import { calculateFraudRisk } from "@/ai/flows/ai-powered-transaction-risk-scoring-flow";
 import { generateFraudExplanation } from "@/ai/flows/ai-generated-fraud-explanation-flow";
 import { TransactionFeed } from "@/components/dashboard/TransactionFeed";
@@ -16,11 +16,12 @@ import { SpatialHeatmap } from "@/components/dashboard/SpatialHeatmap";
 import { FraudTypology } from "@/components/dashboard/FraudTypology";
 import { AdminSettings } from "@/components/dashboard/AdminSettings";
 import { Button } from "@/components/ui/button";
-import { Shield, Radar, Zap, ShieldAlert, History, Settings, Users, ArrowRightLeft } from "lucide-react";
+import { Shield, Radar, Zap, ShieldAlert, Settings, ArrowRightLeft, Sun, Moon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 export default function FraudShieldDashboard() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>(MOCK_PROFILES);
   const [role, setRole] = useState<UserRole>('analyst');
   const [config, setConfig] = useState<SystemConfig>({
@@ -44,7 +45,23 @@ export default function FraudShieldDashboard() {
   const selectedTransaction = useMemo(() => transactions.find(t => t.id === selectedTxId) || null, [transactions, selectedTxId]);
   const selectedProfile = useMemo(() => selectedTransaction ? profiles[selectedTransaction.userId] : null, [profiles, selectedTransaction]);
 
-  // Cross-User Intelligence: Track which devices belong to which users
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('fraudshield-theme') as 'light' | 'dark';
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('fraudshield-theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
+
   const deviceRegistry = useMemo(() => {
     const registry: Record<string, string[]> = {};
     transactions.forEach(tx => {
@@ -72,7 +89,6 @@ export default function FraudShieldDashboard() {
       investigationStatus: 'pending'
     };
 
-    // Feature Engineering with Cross-User Intelligence
     const engineered = engineerFeatures(rawTx, profile, transactions);
     const isDeviceUsedByOthers = deviceRegistry[device] && deviceRegistry[device].some(uid => uid !== userId);
     engineered.deviceReuseAlert = isDeviceUsedByOthers;
@@ -88,13 +104,11 @@ export default function FraudShieldDashboard() {
         userProfile: profile
       });
 
-      // Fraud Escalation Logic: If this user has had multiple flags recently, boost risk
       const recentFlags = transactions.filter(t => t.userId === userId && t.status === 'flagged' && (Date.now() - new Date(t.timestamp).getTime()) < 3600000).length;
       let finalRiskScore = scoringResult.riskScore;
       if (recentFlags > 1) finalRiskScore = Math.min(100, finalRiskScore + 15);
       if (isDeviceUsedByOthers) finalRiskScore = Math.min(100, finalRiskScore + 10);
 
-      // Use Enterprise Config Thresholds
       const riskLevel = finalRiskScore >= config.thresholds.high ? 'high' : finalRiskScore >= config.thresholds.medium ? 'medium' : 'low';
 
       const explanationResult = await generateFraudExplanation({
@@ -165,7 +179,7 @@ export default function FraudShieldDashboard() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden selection:bg-primary/30">
-      <header className="flex h-16 items-center justify-between border-b border-white/5 px-6 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
+      <header className="flex h-16 items-center justify-between border-b border-foreground/5 px-6 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <motion.div 
             initial={{ rotate: -180, opacity: 0 }}
@@ -185,7 +199,16 @@ export default function FraudShieldDashboard() {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="flex bg-white/5 rounded-full p-1 border border-white/5">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleTheme}
+            className="rounded-full w-8 h-8 hover:bg-foreground/5"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+
+          <div className="flex bg-foreground/5 rounded-full p-1 border border-foreground/5">
             <Button 
               variant={role === 'analyst' ? 'default' : 'ghost'} 
               size="sm" 
@@ -252,7 +275,7 @@ export default function FraudShieldDashboard() {
                 <div className="xl:col-span-4 space-y-6">
                   <FraudTypology transactions={transactions} />
                   
-                  <motion.div className="cyber-card p-5 rounded-xl space-y-4 border-border/40">
+                  <motion.div className="cyber-card p-5 rounded-xl space-y-4">
                     <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary flex items-center gap-2">
                       <Radar className="w-4 h-4" />
                       Tactical Threat Radar
@@ -260,20 +283,20 @@ export default function FraudShieldDashboard() {
                     <SpatialHeatmap transaction={selectedTransaction} history={transactions} />
                   </motion.div>
 
-                  <motion.div className="cyber-card p-5 rounded-xl space-y-4 border-border/40">
+                  <motion.div className="cyber-card p-5 rounded-xl space-y-4">
                     <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent flex items-center gap-2">
                       <Zap className="w-4 h-4" />
                       Cross-User Intelligence
                     </h4>
                     <div className="space-y-3">
-                      <div className="p-3 rounded bg-white/5 border border-white/5 space-y-2">
+                      <div className="p-3 rounded bg-foreground/5 border border-foreground/5 space-y-2">
                         <span className="text-[8px] font-mono text-muted-foreground uppercase flex items-center gap-2">
                           <ArrowRightLeft className="w-3 h-3" />
                           Device Reuse Tracker
                         </span>
                         <div className="flex justify-between items-end">
                           <span className="text-xl font-bold">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
-                          <span className="text-[9px] text-destructive">SHARED DEVICES</span>
+                          <span className="text-[9px] text-destructive font-bold">SHARED DEVICES</span>
                         </div>
                       </div>
                     </div>
