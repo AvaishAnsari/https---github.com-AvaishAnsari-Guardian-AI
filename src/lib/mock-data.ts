@@ -1,5 +1,8 @@
 import { UserProfile, Transaction } from './types';
 
+// Use a fixed date to avoid hydration mismatches across server and client
+const FIXED_TIMESTAMP = "2025-05-20T10:00:00Z";
+
 export const MOCK_PROFILES: Record<string, UserProfile> = {
   'USER_001': {
     userId: 'USER_001',
@@ -35,7 +38,7 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     amount: 500,
     location: 'Bangalore',
     device: 'iPhone 15',
-    timestamp: new Date().toISOString(),
+    timestamp: FIXED_TIMESTAMP,
     status: 'cleared',
     riskScore: 5,
     riskLevel: 'low'
@@ -47,7 +50,7 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     amount: 12000,
     location: 'London',
     device: 'Unknown Android',
-    timestamp: new Date().toISOString(),
+    timestamp: FIXED_TIMESTAMP,
     status: 'flagged',
     riskScore: 88,
     riskLevel: 'high',

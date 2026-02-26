@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Transaction } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +12,12 @@ interface TransactionFeedProps {
 }
 
 export function TransactionFeed({ transactions, onSelect }: TransactionFeedProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <div className="flex flex-col h-full bg-card rounded-xl border border-border overflow-hidden">
       <div className="p-4 border-b border-border bg-card/50">
@@ -35,7 +42,7 @@ export function TransactionFeed({ transactions, onSelect }: TransactionFeedProps
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-sm text-foreground/90">{tx.userName}</span>
                 <span className="text-xs text-muted-foreground">
-                  {format(new Date(tx.timestamp), 'HH:mm:ss')}
+                  {isMounted ? format(new Date(tx.timestamp), 'HH:mm:ss') : '--:--:--'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
