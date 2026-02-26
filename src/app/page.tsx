@@ -14,12 +14,11 @@ import { RiskTrendChart } from "@/components/dashboard/RiskTrendChart";
 import { FraudAlertNotification } from "@/components/dashboard/FraudAlertNotification";
 import { SpatialHeatmap } from "@/components/dashboard/SpatialHeatmap";
 import { Button } from "@/components/ui/button";
-import { Shield, Radar, Zap, ShieldAlert, Cpu } from "lucide-react";
+import { Shield, Radar, Zap, ShieldAlert } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
-export default function GuardianAIDashboard() {
+export default function FraudShieldDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -137,7 +136,7 @@ export default function GuardianAIDashboard() {
           </motion.div>
           <div className="flex flex-col">
             <h1 className="text-lg font-black tracking-widest bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase">
-              Guardian AI
+              FraudShield AI
             </h1>
             <span className="text-[9px] font-mono text-muted-foreground tracking-[0.3em] uppercase opacity-60">
               Cyber Defense Protocol v2.5.0

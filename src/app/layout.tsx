@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Guardian AI | Next-Gen Fraud Defense',
+  title: 'FraudShield AI | Next-Gen Fraud Defense',
   description: 'AI-Powered Financial Fraud Monitoring Platform',
 };
 
