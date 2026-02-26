@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Transaction } from "@/lib/types";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { Transaction, UserProfile, InvestigationStatus, FraudCategory } from "@/lib/types";
 import { INITIAL_TRANSACTIONS, MOCK_PROFILES } from "@/lib/mock-data";
 import { engineerFeatures, getRiskLevel } from "@/lib/feature-engineering";
 import { calculateFraudRisk } from "@/ai/flows/ai-powered-transaction-risk-scoring-flow";
@@ -14,36 +14,48 @@ import { RiskTrendChart } from "@/components/dashboard/RiskTrendChart";
 import { FraudAlertNotification } from "@/components/dashboard/FraudAlertNotification";
 import { SpatialHeatmap } from "@/components/dashboard/SpatialHeatmap";
 import { Button } from "@/components/ui/button";
-import { Shield, Radar, Zap, ShieldAlert } from "lucide-react";
+import { Shield, Radar, Zap, ShieldAlert, History } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 export default function FraudShieldDashboard() {
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [profiles, setProfiles] = useState<Record<string, UserProfile>>(MOCK_PROFILES);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    // Add caseId and investigationStatus to initial data
+    return INITIAL_TRANSACTIONS.map(tx => ({
+      ...tx,
+      caseId: `CASE-${tx.id.split('_')[1] || Math.floor(Math.random() * 1000)}`,
+      investigationStatus: tx.status === 'flagged' ? 'pending' : 'pending' as InvestigationStatus,
+      category: tx.riskLevel === 'high' ? 'Behavioral Anomaly' : 'Nominal' as FraudCategory,
+      confidenceScore: 85 + Math.floor(Math.random() * 10)
+    }));
+  });
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [alertTx, setAlertTx] = useState<Transaction | null>(null);
 
-  const selectedTransaction = transactions.find(t => t.id === selectedTxId) || null;
-  const selectedProfile = selectedTransaction ? MOCK_PROFILES[selectedTransaction.userId] : null;
+  const selectedTransaction = useMemo(() => transactions.find(t => t.id === selectedTxId) || null, [transactions, selectedTxId]);
+  const selectedProfile = useMemo(() => selectedTransaction ? profiles[selectedTransaction.userId] : null, [profiles, selectedTransaction]);
 
   const handleProcessTransaction = useCallback(async (userId: string, amount: number, location: string, device: string) => {
     setIsProcessing(true);
-    const profile = MOCK_PROFILES[userId];
+    const profile = profiles[userId];
     if (!profile) return;
 
     const rawTx: Transaction = {
       id: `TX_${Date.now()}`,
+      caseId: `CASE-${Math.floor(Math.random() * 100000)}`,
       userId,
       userName: profile.name,
       amount,
       location,
       device,
       timestamp: new Date().toISOString(),
-      status: 'pending'
+      status: 'pending',
+      investigationStatus: 'pending'
     };
 
-    const engineered = engineerFeatures(rawTx, profile);
+    const engineered = engineerFeatures(rawTx, profile, transactions);
 
     try {
       const scoringResult = await calculateFraudRisk({
@@ -70,13 +82,17 @@ export default function FraudShieldDashboard() {
           amountSignificantDeviation: engineered.amountRatio > 2,
           newDeviceDetected: engineered.newDevice,
           unusualTime: engineered.unusualTime,
-          locationChange: engineered.locationChange
+          locationChange: engineered.locationChange,
+          highFrequency: engineered.velocityAlert,
+          unusualMerchant: engineered.structuringAlert
         }
       });
 
       const processedTx: Transaction = {
         ...rawTx,
         riskScore,
+        confidenceScore: scoringResult.confidenceScore,
+        category: scoringResult.category as FraudCategory,
         riskLevel,
         riskBreakdown: scoringResult.riskBreakdown,
         explanation: explanationResult.explanation,
@@ -103,10 +119,46 @@ export default function FraudShieldDashboard() {
     } finally {
       setIsProcessing(false);
     }
+  }, [profiles, transactions]);
+
+  // Adaptive Learning: Feedback loop to update profiles
+  const updateProfileLearning = useCallback((userId: string, location: string, device: string) => {
+    setProfiles(prev => {
+      const profile = prev[userId];
+      if (!profile) return prev;
+      
+      const updatedLocations = Array.from(new Set([...profile.typicalLocations, location]));
+      const updatedDevices = Array.from(new Set([...profile.typicalDevices, device]));
+      
+      return {
+        ...prev,
+        [userId]: {
+          ...profile,
+          typicalLocations: updatedLocations,
+          typicalDevices: updatedDevices
+        }
+      };
+    });
+    toast({
+      title: "Model Adaptive Learning",
+      description: `Behavioral profile for user updated with new verified vectors.`,
+    });
   }, []);
 
   const handleAction = (id: string, status: 'blocked' | 'approved') => {
-    setTransactions(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+
+    setTransactions(prev => prev.map(t => t.id === id ? { 
+      ...t, 
+      status, 
+      investigationStatus: status === 'blocked' ? 'confirmed_fraud' : 'false_positive' 
+    } : t));
+    
+    if (status === 'approved' && tx) {
+      updateProfileLearning(tx.userId, tx.location, tx.device);
+    }
+
     setAlertTx(null);
     toast({
       title: status === 'blocked' ? "Threat Neutralized" : "Manual Override",
@@ -115,12 +167,13 @@ export default function FraudShieldDashboard() {
     });
   };
 
-  const simulateThreat = () => {
-    const userIds = Object.keys(MOCK_PROFILES);
-    const userId = userIds[Math.floor(Math.random() * userIds.length)];
-    const profile = MOCK_PROFILES[userId];
-    const suspiciousAmount = profile.averageAmount * 15;
-    handleProcessTransaction(userId, suspiciousAmount, "Dubai", "Unidentified Android 4.0");
+  const simulatePatternFraud = () => {
+    const userId = 'USER_001';
+    const profile = profiles[userId];
+    // Rapid small amounts (Structuring)
+    handleProcessTransaction(userId, 200, "Mumbai", "iPhone 15");
+    setTimeout(() => handleProcessTransaction(userId, 200, "Mumbai", "iPhone 15"), 500);
+    setTimeout(() => handleProcessTransaction(userId, 200, "Mumbai", "iPhone 15"), 1000);
   };
 
   return (
@@ -139,25 +192,35 @@ export default function FraudShieldDashboard() {
               FraudShield AI
             </h1>
             <span className="text-[9px] font-mono text-muted-foreground tracking-[0.3em] uppercase opacity-60">
-              Cyber Defense Protocol v2.5.0
+              Enterprise Operations Hub v3.1.0
             </span>
           </div>
         </div>
         
         <div className="flex items-center gap-4">
            <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2 border-primary/30 hover:bg-primary/10 transition-all font-mono text-[10px] uppercase tracking-widest h-8"
+            onClick={simulatePatternFraud}
+            disabled={isProcessing}
+          >
+            <History className="h-3.5 w-3.5" />
+            Simulate_Pattern
+          </Button>
+           <Button 
             variant="destructive" 
             size="sm" 
             className="flex items-center gap-2 border-destructive/30 hover:bg-destructive/10 transition-all font-mono text-[10px] uppercase tracking-widest h-8"
-            onClick={simulateThreat}
+            onClick={() => handleProcessTransaction('USER_002', 25000, "Dubai", "Unidentified Linux VM")}
             disabled={isProcessing}
           >
             <ShieldAlert className="h-3.5 w-3.5" />
-            Simulate_Threat
+            Simulate_Attack
           </Button>
           <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Active_Monitor
+            Adaptive_Learning_On
           </div>
         </div>
       </header>
@@ -168,7 +231,6 @@ export default function FraudShieldDashboard() {
           <StatCards transactions={transactions} />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
-            {/* Left Column: Feed and Inputs */}
             <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 min-h-0">
               <TransactionInputForm onAddTransaction={handleProcessTransaction} isLoading={isProcessing} />
               <div className="flex-1 min-h-0">
@@ -179,43 +241,47 @@ export default function FraudShieldDashboard() {
               </div>
             </div>
 
-            {/* Right Column: Detailed Analysis and Charts */}
             <div className="lg:col-span-8 xl:col-span-9 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 <div className="xl:col-span-8 space-y-6">
                   <AnalysisPanel 
                     transaction={selectedTransaction} 
-                    profile={selectedProfile} 
+                    profile={selectedProfile}
+                    history={transactions}
+                    onAction={handleAction}
                   />
                   <RiskTrendChart transactions={transactions} />
                 </div>
                 
-                {/* Tactical Sidebar */}
                 <div className="xl:col-span-4 space-y-6">
                   <motion.div className="cyber-card p-5 rounded-xl space-y-4 border-border/40">
                     <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary flex items-center gap-2">
                       <Radar className="w-4 h-4" />
-                      Spatial Threat Heatmap
+                      Sector Threat Analysis
                     </h4>
-                    <SpatialHeatmap transaction={selectedTransaction} />
+                    <SpatialHeatmap transaction={selectedTransaction} history={transactions} />
                   </motion.div>
 
                   <motion.div className="cyber-card p-5 rounded-xl space-y-4 border-border/40">
                     <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent flex items-center gap-2">
                       <Zap className="w-4 h-4" />
-                      Automated Defenses
+                      Operational Intelligence
                     </h4>
                     <div className="space-y-3">
-                      {selectedTransaction?.riskLevel === 'high' ? (
-                        <div className="space-y-3">
-                          <div className="flex items-start gap-3 p-2 rounded bg-destructive/10 border border-destructive/20">
-                             <div className="w-1.5 h-1.5 rounded-full bg-destructive mt-1.5 shrink-0 animate-pulse" />
-                             <p className="text-[9px] text-muted-foreground font-mono uppercase">Pipeline Suspended: Vector Divergence</p>
-                          </div>
+                      <div className="p-3 rounded bg-white/5 border border-white/5 space-y-1">
+                        <span className="text-[8px] font-mono text-muted-foreground uppercase">Model Confidence avg.</span>
+                        <div className="flex justify-between items-end">
+                          <span className="text-xl font-bold">91.4%</span>
+                          <span className="text-[9px] text-emerald-500">+1.2%</span>
                         </div>
-                      ) : (
-                        <p className="text-[10px] font-mono text-muted-foreground uppercase text-center py-4 opacity-30">Nominal Activity</p>
-                      )}
+                      </div>
+                      <div className="p-3 rounded bg-white/5 border border-white/5 space-y-1">
+                        <span className="text-[8px] font-mono text-muted-foreground uppercase">Active Alerts</span>
+                        <div className="flex justify-between items-end">
+                          <span className="text-xl font-bold text-destructive">{transactions.filter(t => t.investigationStatus === 'pending' && t.riskLevel === 'high').length}</span>
+                          <span className="text-[9px] text-muted-foreground uppercase">Awaiting Action</span>
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
                 </div>

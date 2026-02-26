@@ -1,4 +1,6 @@
 export type RiskLevel = 'low' | 'medium' | 'high';
+export type InvestigationStatus = 'pending' | 'under_investigation' | 'confirmed_fraud' | 'false_positive';
+export type FraudCategory = 'Behavioral Anomaly' | 'Pattern-Based Fraud' | 'Geolocation Risk' | 'Device Risk' | 'Velocity Risk' | 'Nominal';
 
 export interface UserProfile {
   userId: string;
@@ -17,10 +19,12 @@ export interface RiskBreakdown {
   deviceRisk: number;
   locationRisk: number;
   timeRisk: number;
+  patternRisk: number;
 }
 
 export interface Transaction {
   id: string;
+  caseId: string;
   userId: string;
   userName: string;
   amount: number;
@@ -28,10 +32,14 @@ export interface Transaction {
   device: string;
   timestamp: string;
   riskScore?: number;
+  confidenceScore?: number;
   riskLevel?: RiskLevel;
+  category?: FraudCategory;
   riskBreakdown?: RiskBreakdown;
   explanation?: string;
   status: 'pending' | 'flagged' | 'cleared' | 'blocked' | 'approved';
+  investigationStatus: InvestigationStatus;
+  analystNotes?: string;
 }
 
 export interface EngineeredFeatures {
@@ -39,4 +47,6 @@ export interface EngineeredFeatures {
   unusualTime: boolean;
   locationChange: boolean;
   newDevice: boolean;
+  velocityAlert: boolean;
+  structuringAlert: boolean;
 }

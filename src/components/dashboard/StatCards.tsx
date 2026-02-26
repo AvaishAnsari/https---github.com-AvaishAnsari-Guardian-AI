@@ -1,16 +1,17 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldAlert, ShieldCheck, Activity, TrendingUp } from "lucide-react";
+import { ShieldAlert, ShieldCheck, Activity, TrendingUp, Target, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function StatCards({ transactions }: { transactions: any[] }) {
-  const highRisk = transactions.filter(tx => tx.riskLevel === 'high').length;
+  const highRiskCount = transactions.filter(tx => tx.riskLevel === 'high').length;
   const totalProcessed = transactions.length;
-  const avgRisk = transactions.length > 0 
-    ? Math.round(transactions.reduce((acc, tx) => acc + (tx.riskScore || 0), 0) / transactions.length) 
-    : 0;
+  const confirmedFraud = transactions.filter(tx => tx.investigationStatus === 'confirmed_fraud').length;
+  const falsePositives = transactions.filter(tx => tx.investigationStatus === 'false_positive').length;
+  
+  const detectionRate = totalProcessed > 0 ? Math.round((confirmedFraud / totalProcessed) * 100) : 0;
+  const fpRate = highRiskCount > 0 ? Math.round((falsePositives / highRiskCount) * 100) : 0;
 
   const stats = [
     {
@@ -19,35 +20,31 @@ export function StatCards({ transactions }: { transactions: any[] }) {
       label: "Real-time activity",
       icon: Activity,
       color: "text-primary",
-      bg: "bg-primary/10",
-      border: "border-primary/20"
+      bg: "bg-primary/10"
     },
     {
-      title: "High Risk Alerts",
-      value: highRisk,
-      label: "Critical threats",
-      icon: ShieldAlert,
+      title: "Fraud Detect Rate",
+      value: `${detectionRate}%`,
+      label: "Confirmed attacks",
+      icon: Target,
       color: "text-destructive",
-      bg: "bg-destructive/10",
-      border: "border-destructive/20"
+      bg: "bg-destructive/10"
     },
     {
-      title: "Avg. Risk Score",
-      value: avgRisk,
-      label: "Global index",
-      icon: TrendingUp,
+      title: "False Positive",
+      value: `${fpRate}%`,
+      label: "Model precision",
+      icon: BarChart3,
       color: "text-accent",
-      bg: "bg-accent/10",
-      border: "border-accent/20"
+      bg: "bg-accent/10"
     },
     {
-      title: "Safe Activity",
-      value: totalProcessed - highRisk,
-      label: "Verified traffic",
+      title: "Safe Traffic",
+      value: totalProcessed - confirmedFraud,
+      label: "Verified activity",
       icon: ShieldCheck,
       color: "text-emerald-500",
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/20"
+      bg: "bg-emerald-500/10"
     }
   ];
 
