@@ -19,13 +19,13 @@ export function FraudTypology({ transactions }: { transactions: Transaction[] })
 
   return (
     <Card className="cyber-card border-none shadow-sm">
-      <CardHeader className="pb-2 border-b">
-        <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-          <BarChart3 className="w-3 h-3" />
+      <CardHeader className="pb-3 border-b">
+        <CardTitle className="text-[11px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+          <BarChart3 className="w-4 h-4" />
           Fraud Typology Distribution
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-[200px] p-0 flex items-center">
+      <CardContent className="h-[220px] p-0 flex items-center">
         <div className="w-1/2 h-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -33,8 +33,8 @@ export function FraudTypology({ transactions }: { transactions: Transaction[] })
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
-                outerRadius={70}
+                innerRadius={60}
+                outerRadius={80}
                 paddingAngle={4}
                 dataKey="value"
               >
@@ -43,19 +43,19 @@ export function FraudTypology({ transactions }: { transactions: Transaction[] })
                 ))}
               </Pie>
               <Tooltip 
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '10px' }}
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: '12px', fontWeight: '900' }}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="w-1/2 pr-6 space-y-2">
+        <div className="w-1/2 pr-8 space-y-3">
           {data.map((item, i) => (
             <div key={item.name} className="flex items-center justify-between">
               <div className="flex items-center gap-2 overflow-hidden">
-                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                <span className="text-[9px] font-medium text-muted-foreground truncate uppercase">{item.name}</span>
+                <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                <span className="text-[10px] font-black text-muted-foreground truncate uppercase">{item.name}</span>
               </div>
-              <span className="text-[10px] font-bold">{Math.round((item.value / transactions.length) * 100)}%</span>
+              <span className="text-[11px] font-black">{Math.round((item.value / transactions.length) * 100)}%</span>
             </div>
           ))}
         </div>

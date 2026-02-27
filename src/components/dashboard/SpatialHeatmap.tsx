@@ -34,8 +34,8 @@ export function SpatialHeatmap({ transaction, history }: SpatialHeatmapProps) {
   }, [transaction]);
 
   return (
-    <div className="space-y-4">
-      <div className="relative aspect-square w-full bg-muted/20 rounded-xl border border-border overflow-hidden group">
+    <div className="space-y-6">
+      <div className="relative aspect-square w-full bg-muted/20 rounded-2xl border-2 border-border overflow-hidden group">
         <div className="absolute inset-0 grid grid-cols-10 grid-rows-10">
           {Array.from({ length: 100 }).map((_, i) => (
             <div key={i} className="border-[0.5px] border-border/20" />
@@ -49,7 +49,7 @@ export function SpatialHeatmap({ transaction, history }: SpatialHeatmapProps) {
             className="absolute w-[10%] h-[10%] flex items-center justify-center opacity-40"
           >
             <div className={cn(
-              "w-1.5 h-1.5 rounded-full",
+              "w-2 h-2 rounded-full",
               p.risk === 'high' ? "bg-destructive" : p.risk === 'medium' ? "bg-amber-500" : "bg-primary"
             )} />
           </div>
@@ -67,38 +67,38 @@ export function SpatialHeatmap({ transaction, history }: SpatialHeatmapProps) {
             className="absolute w-[10%] h-[10%] flex items-center justify-center z-20"
           >
             <div className={cn(
-              "w-2.5 h-2.5 rounded-full shadow-lg",
+              "w-3.5 h-3.5 rounded-full shadow-lg",
               transaction?.riskLevel === 'high' ? "bg-destructive" : "bg-primary"
             )} />
             <motion.div 
-              animate={{ scale: [1, 2.5], opacity: [0.5, 0] }}
+              animate={{ scale: [1, 2.8], opacity: [0.5, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
               className={cn(
-                "absolute w-full h-full rounded-full border",
+                "absolute w-full h-full rounded-full border-2",
                 transaction?.riskLevel === 'high' ? "border-destructive" : "border-primary"
               )}
             />
           </motion.div>
         )}
 
-        <div className="absolute bottom-3 left-3 flex flex-col gap-0.5">
-          <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Sector: 0x{activeCoord ? (activeCoord.x * 10 + activeCoord.y).toString(16).toUpperCase() : '00'}</span>
-          <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Threat_Zones: {historicalPings.filter(p => p.risk === 'high').length}</span>
+        <div className="absolute bottom-4 left-4 flex flex-col gap-1">
+          <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Sector: 0x{activeCoord ? (activeCoord.x * 10 + activeCoord.y).toString(16).toUpperCase() : '00'}</span>
+          <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Threat_Zones: {historicalPings.filter(p => p.risk === 'high').length}</span>
         </div>
       </div>
 
-      <div className="flex justify-between items-center px-2">
+      <div className="flex justify-between items-center px-4">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-destructive" />
-          <span className="text-[8px] font-bold uppercase text-muted-foreground">High Risk</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-destructive" />
+          <span className="text-[10px] font-black uppercase text-muted-foreground">High Risk</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-amber-500" />
-          <span className="text-[8px] font-bold uppercase text-muted-foreground">Anomalous</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+          <span className="text-[10px] font-black uppercase text-muted-foreground">Anomalous</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-primary" />
-          <span className="text-[8px] font-bold uppercase text-muted-foreground">Baseline</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+          <span className="text-[10px] font-black uppercase text-muted-foreground">Baseline</span>
         </div>
       </div>
     </div>

@@ -68,23 +68,23 @@ export function StatCards({ transactions }: { transactions: Transaction[] }) {
         >
           <Card className="cyber-card relative overflow-hidden group border-none shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stat.title}</CardTitle>
+              <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stat.title}</CardTitle>
               <div className={cn("p-1.5 rounded-lg bg-muted", stat.color.replace('text', 'bg').replace('500', '500/10'))}>
                 <stat.icon className={cn("h-4 w-4", stat.color)} />
               </div>
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-3">
-                <div className="text-2xl font-bold tracking-tight">{stat.value}</div>
+                <div className="text-3xl font-black tracking-tight">{stat.value}</div>
                 <div className={cn(
-                  "text-[10px] font-bold flex items-center gap-1",
+                  "text-[10px] font-black flex items-center gap-1",
                   stat.trend.startsWith('+') ? "text-emerald-500" : "text-destructive"
                 )}>
                   {stat.trend.startsWith('+') ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {stat.trend}
                 </div>
               </div>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-1 font-medium">{stat.label}</p>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-1 font-black">{stat.label}</p>
             </CardContent>
           </Card>
         </motion.div>
