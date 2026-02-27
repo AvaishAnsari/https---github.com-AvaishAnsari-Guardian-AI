@@ -33,22 +33,31 @@ export default function FraudShieldDashboard() {
     return INITIAL_TRANSACTIONS.map(tx => ({
       ...tx,
       caseId: `CASE-${tx.id.split('_')[1] || Math.floor(Math.random() * 1000)}`,
-      investigationStatus: tx.status === 'flagged' ? 'pending' : (tx.status === 'cleared' ? 'pending' : 'pending' as InvestigationStatus),
-      category: tx.riskLevel === 'high' ? 'Behavioral Anomaly' : 'Nominal' as FraudCategory,
-      confidenceScore: 85 + Math.floor(Math.random() * 10)
+      investigationStatus: tx.investigationStatus || 'pending',
+      category: tx.category || (tx.riskLevel === 'high' ? 'Behavioral Anomaly' : 'Nominal'),
+      confidenceScore: tx.confidenceScore || (85 + Math.floor(Math.random() * 10))
     }));
   });
 
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [alertTx, setAlertTx] = useState<Transaction | null>(null);
+
+  const selectedTransaction = useMemo(() => {
+    return transactions.find(t => t.id === selectedTxId) || null;
+  }, [transactions, selectedTxId]);
+
+  const selectedProfile = useMemo(() => {
+    if (!selectedTransaction) return null;
+    return profiles[selectedTransaction.userId] || null;
+  }, [selectedTransaction, profiles]);
 
   useEffect(() => {
     if (transactions.length > 0 && !selectedTxId) {
-      setSelectedTxId(transactions[transactions.length - 1].id);
+      const highRisk = transactions.find(t => t.riskLevel === 'high');
+      setSelectedTxId(highRisk ? highRisk.id : transactions[transactions.length - 1].id);
     }
   }, [transactions, selectedTxId]);
-
-  const selectedTransaction = useMemo(() => transactions.find(t => t.id === selectedTxId) || null, [transactions, selectedTxId]);
-  const selectedProfile = useMemo(() => selectedTransaction ? profiles[selectedTransaction.userId] : null, [profiles, selectedTransaction]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('fraudshield-theme') as 'light' | 'dark';
@@ -76,13 +85,13 @@ export default function FraudShieldDashboard() {
     return registry;
   }, [transactions]);
 
-  const handleProcessTransaction = useCallback(async (userId: string, amount: number, location: string, device: string) => {
-    setIsProcessing(true);
+  const handleProcessTransaction = useCallback(async (userId: string, amount: number, location: string, device: string, silent = false) => {
+    if (!silent) setIsProcessing(true);
     const profile = profiles[userId];
     if (!profile) return;
 
     const rawTx: Transaction = {
-      id: `TX_${Date.now()}`,
+      id: `TX_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       caseId: `CASE-${Math.floor(Math.random() * 100000)}`,
       userId,
       userName: profile.name,
@@ -147,26 +156,45 @@ export default function FraudShieldDashboard() {
       };
 
       setTransactions(prev => [...prev, processedTx]);
-      setSelectedTxId(processedTx.id);
-
-      if (riskLevel === 'high') {
-        setAlertTx(processedTx);
-      } else {
-        toast({
-          title: "Analysis Complete",
-          description: `Transaction verified: ${riskLevel.toUpperCase()} risk detected.`,
-        });
+      
+      if (!silent) {
+        setSelectedTxId(processedTx.id);
+        if (riskLevel === 'high') {
+          setAlertTx(processedTx);
+        } else {
+          toast({
+            title: "Analysis Complete",
+            description: `Transaction verified: ${riskLevel.toUpperCase()} risk detected.`,
+          });
+        }
       }
     } catch (error) {
-      toast({
-        title: "Protocol Failure",
-        description: "Network timeout in neural bridge.",
-        variant: "destructive",
-      });
+      if (!silent) {
+        toast({
+          title: "Protocol Failure",
+          description: "Network timeout in neural bridge.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsProcessing(false);
+      if (!silent) setIsProcessing(false);
     }
   }, [profiles, transactions, config, deviceRegistry]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (Math.random() > 0.8 && !isProcessing) {
+        const userIds = Object.keys(profiles);
+        const randomUserId = userIds[Math.floor(Math.random() * userIds.length)];
+        const profile = profiles[randomUserId];
+        const amount = profile.averageAmount * (0.8 + Math.random() * 0.4);
+        const location = profile.typicalLocations[Math.floor(Math.random() * profile.typicalLocations.length)];
+        const device = profile.typicalDevices[Math.floor(Math.random() * profile.typicalDevices.length)];
+        handleProcessTransaction(randomUserId, Math.round(amount), location, device, true);
+      }
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [profiles, isProcessing, handleProcessTransaction]);
 
   const handleAction = (id: string, status: 'blocked' | 'approved') => {
     const tx = transactions.find(t => t.id === id);
@@ -182,10 +210,8 @@ export default function FraudShieldDashboard() {
       setProfiles(prev => {
         const user = prev[tx.userId];
         if (!user) return prev;
-        
         const updatedTypicalLocations = [...new Set([...user.typicalLocations, tx.location])];
         const updatedTypicalDevices = [...new Set([...user.typicalDevices, tx.device])];
-        
         return {
           ...prev,
           [tx.userId]: {
@@ -195,7 +221,6 @@ export default function FraudShieldDashboard() {
           }
         };
       });
-      
       toast({
         title: "Model Adapted",
         description: "User behavioral profile updated to include new patterns.",
@@ -216,45 +241,42 @@ export default function FraudShieldDashboard() {
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, analystNotes: notes } : t));
   };
 
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [alertTx, setAlertTx] = useState<Transaction | null>(null);
-
   return (
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden selection:bg-primary/30">
-      <header className="flex h-20 items-center justify-between border-b border-foreground/5 px-8 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
-        <div className="flex items-center gap-6">
+      <header className="flex h-24 items-center justify-between border-b border-foreground/5 px-10 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
+        <div className="flex items-center gap-8">
           <motion.div 
             initial={{ rotate: -180, opacity: 0 }}
             animate={{ rotate: 0, opacity: 1 }}
-            className="bg-primary/20 p-3 rounded-2xl border border-primary/30"
+            className="bg-primary/20 p-4 rounded-2xl border border-primary/30"
           >
-            <Shield className="h-8 w-8 text-primary" />
+            <Shield className="h-10 w-10 text-primary" />
           </motion.div>
           <div className="flex flex-col">
-            <h1 className="text-2xl font-black tracking-widest bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase">
+            <h1 className="text-4xl font-black tracking-widest bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase">
               FraudShield AI
             </h1>
-            <span className="text-xs font-mono text-muted-foreground tracking-[0.3em] uppercase opacity-60">
+            <span className="text-sm font-mono text-muted-foreground tracking-[0.4em] uppercase opacity-60">
               Enterprise Hub v3.2.0 | {role.replace('_', ' ')} active
             </span>
           </div>
         </div>
         
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-8">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={toggleTheme}
-            className="rounded-full w-10 h-10 hover:bg-foreground/5"
+            className="rounded-full w-12 h-12 hover:bg-foreground/5"
           >
-            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
           </Button>
 
-          <div className="flex bg-foreground/5 rounded-full p-1.5 border border-foreground/5">
+          <div className="flex bg-foreground/5 rounded-full p-2 border border-foreground/5">
             <Button 
               variant={role === 'analyst' ? 'default' : 'ghost'} 
               size="sm" 
-              className="h-9 text-xs font-bold uppercase rounded-full px-6"
+              className="h-10 text-base font-bold uppercase rounded-full px-8"
               onClick={() => setRole('analyst')}
             >
               Analyst
@@ -262,7 +284,7 @@ export default function FraudShieldDashboard() {
             <Button 
               variant={role === 'risk_manager' ? 'default' : 'ghost'} 
               size="sm" 
-              className="h-9 text-xs font-bold uppercase rounded-full px-6"
+              className="h-10 text-base font-bold uppercase rounded-full px-8"
               onClick={() => setRole('risk_manager')}
             >
               Manager
@@ -271,24 +293,24 @@ export default function FraudShieldDashboard() {
           
           <Button 
             variant="outline" 
-            size="sm" 
-            className="flex items-center gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-xs uppercase tracking-widest h-10 px-4"
-            onClick={() => handleProcessTransaction('USER_001', 95000, "Dubai", "Blackberry OS")}
+            size="lg" 
+            className="flex items-center gap-3 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-base uppercase tracking-widest h-12 px-6"
+            onClick={() => handleProcessTransaction('USER_002', 145000, "London", "Unknown Android")}
             disabled={isProcessing}
           >
-            <ShieldAlert className="h-4 w-4" />
+            <ShieldAlert className="h-6 w-6" />
             Simulate_Fraud
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden p-8">
-        <div className="mx-auto max-w-[1700px] h-full flex flex-col gap-8">
+      <main className="flex-1 overflow-hidden p-10">
+        <div className="mx-auto max-w-[1800px] h-full flex flex-col gap-10">
           
           <StatCards transactions={transactions} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0">
-            <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-8 min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-1 min-h-0">
+            <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-10 min-h-0">
               {role === 'risk_manager' ? (
                 <AdminSettings config={config} onUpdate={setConfig} />
               ) : (
@@ -302,9 +324,9 @@ export default function FraudShieldDashboard() {
               </div>
             </div>
 
-            <div className="lg:col-span-8 xl:col-span-9 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                <div className="xl:col-span-8 space-y-8">
+            <div className="lg:col-span-8 xl:col-span-9 min-h-0 overflow-y-auto pr-4 custom-scrollbar">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+                <div className="xl:col-span-8 space-y-10">
                   <AnalysisPanel 
                     transaction={selectedTransaction} 
                     profile={selectedProfile}
@@ -315,31 +337,31 @@ export default function FraudShieldDashboard() {
                   <RiskTrendChart transactions={transactions} />
                 </div>
                 
-                <div className="xl:col-span-4 space-y-8">
+                <div className="xl:col-span-4 space-y-10">
                   <FraudTypology transactions={transactions} />
                   
-                  <motion.div className="cyber-card p-6 rounded-2xl space-y-5">
-                    <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-primary flex items-center gap-2">
-                      <Radar className="w-5 h-5" />
+                  <motion.div className="cyber-card p-8 rounded-3xl space-y-6">
+                    <h4 className="text-base font-bold tracking-[0.3em] uppercase text-primary flex items-center gap-3">
+                      <Radar className="w-7 h-7" />
                       Tactical Threat Radar
                     </h4>
                     <SpatialHeatmap transaction={selectedTransaction} history={transactions} />
                   </motion.div>
 
-                  <motion.div className="cyber-card p-6 rounded-2xl space-y-5">
-                    <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-accent flex items-center gap-2">
-                      <Zap className="w-5 h-5" />
+                  <motion.div className="cyber-card p-8 rounded-3xl space-y-6">
+                    <h4 className="text-base font-bold tracking-[0.3em] uppercase text-accent flex items-center gap-3">
+                      <Zap className="w-7 h-7" />
                       Cross-User Intelligence
                     </h4>
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-xl bg-foreground/5 border border-foreground/5 space-y-3">
-                        <span className="text-[10px] font-mono text-muted-foreground uppercase flex items-center gap-2">
-                          <ArrowRightLeft className="w-4 h-4" />
+                    <div className="space-y-6">
+                      <div className="p-6 rounded-2xl bg-foreground/5 border border-foreground/5 space-y-4">
+                        <span className="text-sm font-mono text-muted-foreground uppercase flex items-center gap-3">
+                          <ArrowRightLeft className="w-6 h-6" />
                           Device Reuse Tracker
                         </span>
                         <div className="flex justify-between items-end">
-                          <span className="text-3xl font-black">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
-                          <span className="text-[10px] text-destructive font-black">SHARED DEVICES</span>
+                          <span className="text-6xl font-black">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
+                          <span className="text-xs text-destructive font-black tracking-widest">SHARED DEVICES</span>
                         </div>
                       </div>
                     </div>
