@@ -7,15 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MOCK_PROFILES } from "@/lib/mock-data";
+import { UserProfile } from "@/lib/types";
 import { PlusCircle, Loader2 } from "lucide-react";
 
 interface TransactionInputFormProps {
+  profiles: Record<string, UserProfile>;
   onAddTransaction: (userId: string, amount: number, location: string, device: string) => Promise<void>;
   isLoading: boolean;
 }
 
-export function TransactionInputForm({ onAddTransaction, isLoading }: TransactionInputFormProps) {
+export function TransactionInputForm({ profiles, onAddTransaction, isLoading }: TransactionInputFormProps) {
   const [userId, setUserId] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [location, setLocation] = useState<string>("");
@@ -31,7 +32,7 @@ export function TransactionInputForm({ onAddTransaction, isLoading }: Transactio
   return (
     <Card className="cyber-card border-primary/20 p-2">
       <CardHeader className="pb-4">
-        <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-primary flex items-center gap-3">
+        <CardTitle className="text-base font-black uppercase tracking-[0.2em] text-primary flex items-center gap-3">
           <PlusCircle className="w-5 h-5" />
           Ingest New Transaction
         </CardTitle>
@@ -42,12 +43,12 @@ export function TransactionInputForm({ onAddTransaction, isLoading }: Transactio
             <div className="space-y-3">
               <Label className="text-xs font-mono text-muted-foreground uppercase font-bold tracking-widest">User Identity</Label>
               <Select value={userId} onValueChange={setUserId}>
-                <SelectTrigger className="h-11 bg-white/5 border-white/10 text-sm">
+                <SelectTrigger className="h-12 bg-white/5 border-white/10 text-base font-bold">
                   <SelectValue placeholder="Select User" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(MOCK_PROFILES).map((profile) => (
-                    <SelectItem key={profile.userId} value={profile.userId} className="text-sm">
+                  {Object.values(profiles).map((profile) => (
+                    <SelectItem key={profile.userId} value={profile.userId} className="text-base font-bold">
                       {profile.name}
                     </SelectItem>
                   ))}
@@ -61,7 +62,7 @@ export function TransactionInputForm({ onAddTransaction, isLoading }: Transactio
                 value={amount} 
                 onChange={(e) => setAmount(e.target.value)} 
                 placeholder="0.00"
-                className="h-11 bg-white/5 border-white/10 text-sm"
+                className="h-12 bg-white/5 border-white/10 text-base font-black"
               />
             </div>
           </div>
@@ -72,7 +73,7 @@ export function TransactionInputForm({ onAddTransaction, isLoading }: Transactio
                 value={location} 
                 onChange={(e) => setLocation(e.target.value)} 
                 placeholder="e.g. London"
-                className="h-11 bg-white/5 border-white/10 text-sm"
+                className="h-12 bg-white/5 border-white/10 text-base font-bold"
               />
             </div>
             <div className="space-y-3">
@@ -81,14 +82,14 @@ export function TransactionInputForm({ onAddTransaction, isLoading }: Transactio
                 value={device} 
                 onChange={(e) => setDevice(e.target.value)} 
                 placeholder="e.g. Unknown Device"
-                className="h-11 bg-white/5 border-white/10 text-sm"
+                className="h-12 bg-white/5 border-white/10 text-base font-bold"
               />
             </div>
           </div>
           <Button 
             type="submit" 
             disabled={isLoading || !userId || !amount}
-            className="w-full h-12 text-xs font-black uppercase tracking-[0.3em]"
+            className="w-full h-14 text-sm font-black uppercase tracking-[0.3em] shadow-xl hover:shadow-primary/20 transition-all"
           >
             {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : "Initiate Analysis"}
           </Button>

@@ -52,6 +52,15 @@ export default function FraudShieldDashboard() {
     return profiles[selectedTransaction.userId] || null;
   }, [selectedTransaction, profiles]);
 
+  const deviceRegistry = useMemo(() => {
+    const registry: Record<string, string[]> = {};
+    transactions.forEach(tx => {
+      if (!registry[tx.device]) registry[tx.device] = [];
+      if (!registry[tx.device].includes(tx.userId)) registry[tx.device].push(tx.userId);
+    });
+    return registry;
+  }, [transactions]);
+
   useEffect(() => {
     if (transactions.length > 0 && !selectedTxId) {
       const highRisk = transactions.find(t => t.riskLevel === 'high');
@@ -76,22 +85,14 @@ export default function FraudShieldDashboard() {
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
-  const deviceRegistry = useMemo(() => {
-    const registry: Record<string, string[]> = {};
-    transactions.forEach(tx => {
-      if (!registry[tx.device]) registry[tx.device] = [];
-      if (!registry[tx.device].includes(tx.userId)) registry[tx.device].push(tx.userId);
-    });
-    return registry;
-  }, [transactions]);
-
   const handleProcessTransaction = useCallback(async (userId: string, amount: number, location: string, device: string, silent = false) => {
-    if (!silent) setIsProcessing(true);
     const profile = profiles[userId];
     if (!profile) return;
 
-    const rawTx: Transaction = {
-      id: `TX_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    const txId = `TX_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    
+    const initialTx: Transaction = {
+      id: txId,
       caseId: `CASE-${Math.floor(Math.random() * 100000)}`,
       userId,
       userName: profile.name,
@@ -103,17 +104,28 @@ export default function FraudShieldDashboard() {
       investigationStatus: 'pending'
     };
 
-    const engineered = engineerFeatures(rawTx, profile, transactions);
-    const isDeviceUsedByOthers = deviceRegistry[device] && deviceRegistry[device].some(uid => uid !== userId);
-    engineered.deviceReuseAlert = isDeviceUsedByOthers;
+    // Optimistic update: add to feed immediately in 'Scanning' state
+    setTransactions(prev => [...prev, initialTx]);
+    
+    if (!silent) {
+      setIsProcessing(true);
+      setSelectedTxId(txId);
+    }
 
     try {
+      const engineered = engineerFeatures(initialTx, profile, transactions);
+      const isDeviceUsedByOthers = deviceRegistry[device] && deviceRegistry[device].some(uid => uid !== userId);
+      engineered.deviceReuseAlert = isDeviceUsedByOthers;
+
+      // Small delay for manual entries to show the "scanning" animation effect
+      if (!silent) await new Promise(r => setTimeout(r, 1200));
+
       const scoringResult = await calculateFraudRisk({
-        userId: rawTx.userId,
-        amount: rawTx.amount,
-        location: rawTx.location,
-        device: rawTx.device,
-        timestamp: rawTx.timestamp,
+        userId: initialTx.userId,
+        amount: initialTx.amount,
+        location: initialTx.location,
+        device: initialTx.device,
+        timestamp: initialTx.timestamp,
         engineeredFeatures: engineered,
         userProfile: profile
       });
@@ -127,11 +139,11 @@ export default function FraudShieldDashboard() {
       const riskLevel = finalRiskScore >= config.thresholds.high ? 'high' : finalRiskScore >= config.thresholds.medium ? 'medium' : 'low';
 
       const explanationResult = await generateFraudExplanation({
-        userId: rawTx.userId,
-        amount: rawTx.amount,
-        location: rawTx.location,
-        device: rawTx.device,
-        timestamp: rawTx.timestamp,
+        userId: initialTx.userId,
+        amount: initialTx.amount,
+        location: initialTx.location,
+        device: initialTx.device,
+        timestamp: initialTx.timestamp,
         riskScore: finalRiskScore,
         reasons: {
           amountSignificantDeviation: engineered.amountRatio > 2,
@@ -144,7 +156,7 @@ export default function FraudShieldDashboard() {
       });
 
       const processedTx: Transaction = {
-        ...rawTx,
+        ...initialTx,
         riskScore: finalRiskScore,
         confidenceScore: scoringResult.confidenceScore,
         category: scoringResult.category as FraudCategory,
@@ -155,16 +167,16 @@ export default function FraudShieldDashboard() {
         crossUserFlag: isDeviceUsedByOthers
       };
 
-      setTransactions(prev => [...prev, processedTx]);
+      // Replace the scanning transaction with the fully processed one
+      setTransactions(prev => prev.map(t => t.id === txId ? processedTx : t));
       
       if (!silent) {
-        setSelectedTxId(processedTx.id);
         if (riskLevel === 'high') {
           setAlertTx(processedTx);
         } else {
           toast({
             title: "Analysis Complete",
-            description: `Transaction verified: ${riskLevel.toUpperCase()} risk detected.`,
+            description: `Entity verified as ${riskLevel.toUpperCase()} risk.`,
           });
         }
       }
@@ -172,7 +184,7 @@ export default function FraudShieldDashboard() {
       if (!silent) {
         toast({
           title: "Protocol Failure",
-          description: "Network timeout in neural bridge.",
+          description: "Internal analysis node timeout.",
           variant: "destructive",
         });
       }
@@ -183,7 +195,7 @@ export default function FraudShieldDashboard() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Math.random() > 0.7 && !isProcessing) {
+      if (Math.random() > 0.6 && !isProcessing) {
         const userIds = Object.keys(profiles);
         const randomUserId = userIds[Math.floor(Math.random() * userIds.length)];
         const profile = profiles[randomUserId];
@@ -192,7 +204,7 @@ export default function FraudShieldDashboard() {
         const device = profile.typicalDevices[Math.floor(Math.random() * profile.typicalDevices.length)];
         handleProcessTransaction(randomUserId, Math.round(amount), location, device, true);
       }
-    }, 6000); // Increased frequency for "real-time" presentation feel
+    }, 6000);
     return () => clearInterval(interval);
   }, [profiles, isProcessing, handleProcessTransaction]);
 
@@ -223,7 +235,7 @@ export default function FraudShieldDashboard() {
       });
       toast({
         title: "Model Adapted",
-        description: "User behavioral profile updated to include new patterns.",
+        description: "Profile updated to include new behavioral patterns.",
       });
     }
 
@@ -314,7 +326,11 @@ export default function FraudShieldDashboard() {
               {role === 'risk_manager' ? (
                 <AdminSettings config={config} onUpdate={setConfig} />
               ) : (
-                <TransactionInputForm onAddTransaction={handleProcessTransaction} isLoading={isProcessing} />
+                <TransactionInputForm 
+                  profiles={profiles}
+                  onAddTransaction={handleProcessTransaction} 
+                  isLoading={isProcessing} 
+                />
               )}
               <div className="flex-1 min-h-0">
                 <TransactionFeed 
