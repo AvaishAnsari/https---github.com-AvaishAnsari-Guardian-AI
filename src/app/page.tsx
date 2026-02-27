@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Transaction, UserProfile, InvestigationStatus, FraudCategory, SystemConfig, UserRole } from "@/lib/types";
+import { Transaction, UserProfile, InvestigationStatus, FraudCategory, SystemConfig, UserRole, RiskBreakdown } from "@/lib/types";
 import { INITIAL_TRANSACTIONS, MOCK_PROFILES } from "@/lib/mock-data";
 import { engineerFeatures } from "@/lib/feature-engineering";
 import { calculateFraudRisk } from "@/ai/flows/ai-powered-transaction-risk-scoring-flow";
@@ -44,7 +44,7 @@ export default function FraudShieldDashboard() {
   const [alertTx, setAlertTx] = useState<Transaction | null>(null);
 
   const selectedTransaction = useMemo(() => {
-    return transactions.find(t => t.id === selectedTxId) || null;
+    return transactions.find(t => t.id === selectedTxId) || transactions[transactions.length - 1] || null;
   }, [transactions, selectedTxId]);
 
   const selectedProfile = useMemo(() => {
@@ -104,7 +104,6 @@ export default function FraudShieldDashboard() {
       investigationStatus: 'pending'
     };
 
-    // Optimistic update: add to feed immediately in 'Scanning' state
     setTransactions(prev => [...prev, initialTx]);
     
     if (!silent) {
@@ -117,43 +116,75 @@ export default function FraudShieldDashboard() {
       const isDeviceUsedByOthers = deviceRegistry[device] && deviceRegistry[device].some(uid => uid !== userId);
       engineered.deviceReuseAlert = isDeviceUsedByOthers;
 
-      // Small delay for manual entries to show the "scanning" animation effect
       if (!silent) await new Promise(r => setTimeout(r, 1200));
 
-      const scoringResult = await calculateFraudRisk({
-        userId: initialTx.userId,
-        amount: initialTx.amount,
-        location: initialTx.location,
-        device: initialTx.device,
-        timestamp: initialTx.timestamp,
-        engineeredFeatures: engineered,
-        userProfile: profile
-      });
+      let scoringResult;
+      try {
+        scoringResult = await calculateFraudRisk({
+          userId: initialTx.userId,
+          amount: initialTx.amount,
+          location: initialTx.location,
+          device: initialTx.device,
+          timestamp: initialTx.timestamp,
+          engineeredFeatures: engineered,
+          userProfile: profile
+        });
+      } catch (e) {
+        // AI Failure Fallback: Heuristic Engine
+        const baseRisk = (engineered.amountRatio > 5 ? 40 : engineered.amountRatio > 2 ? 20 : 0) +
+                         (engineered.newDevice ? 20 : 0) +
+                         (engineered.locationChange ? 20 : 0) +
+                         (engineered.velocityAlert ? 30 : 0) +
+                         (isDeviceUsedByOthers ? 15 : 0);
+        
+        scoringResult = {
+          riskScore: Math.min(100, baseRisk),
+          confidenceScore: 82,
+          category: engineered.velocityAlert ? 'Velocity Risk' : engineered.locationChange ? 'Geolocation Risk' : 'Behavioral Anomaly',
+          riskBreakdown: {
+            amountRisk: engineered.amountRatio > 2 ? 25 : 5,
+            deviceRisk: engineered.newDevice ? 15 : 2,
+            locationRisk: engineered.locationChange ? 15 : 2,
+            timeRisk: engineered.unusualTime ? 10 : 2,
+            patternRisk: engineered.velocityAlert ? 25 : 5
+          }
+        };
+      }
 
-      const recentFlags = transactions.filter(t => t.userId === userId && t.status === 'flagged' && (Date.now() - new Date(t.timestamp).getTime()) < 3600000).length;
       let finalRiskScore = scoringResult.riskScore;
-      
+      const recentFlags = transactions.filter(t => t.userId === userId && t.status === 'flagged' && (Date.now() - new Date(t.timestamp).getTime()) < 3600000).length;
       if (recentFlags > 1) finalRiskScore = Math.min(100, finalRiskScore + 15);
       if (isDeviceUsedByOthers) finalRiskScore = Math.min(100, finalRiskScore + 10);
 
       const riskLevel = finalRiskScore >= config.thresholds.high ? 'high' : finalRiskScore >= config.thresholds.medium ? 'medium' : 'low';
 
-      const explanationResult = await generateFraudExplanation({
-        userId: initialTx.userId,
-        amount: initialTx.amount,
-        location: initialTx.location,
-        device: initialTx.device,
-        timestamp: initialTx.timestamp,
-        riskScore: finalRiskScore,
-        reasons: {
-          amountSignificantDeviation: engineered.amountRatio > 2,
-          newDeviceDetected: engineered.newDevice,
-          unusualTime: engineered.unusualTime,
-          locationChange: engineered.locationChange,
-          highFrequency: engineered.velocityAlert,
-          unusualMerchant: engineered.structuringAlert || isDeviceUsedByOthers
-        }
-      });
+      let explanation;
+      try {
+        const explanationResult = await generateFraudExplanation({
+          userId: initialTx.userId,
+          amount: initialTx.amount,
+          location: initialTx.location,
+          device: initialTx.device,
+          timestamp: initialTx.timestamp,
+          riskScore: finalRiskScore,
+          reasons: {
+            amountSignificantDeviation: engineered.amountRatio > 2,
+            newDeviceDetected: engineered.newDevice,
+            unusualTime: engineered.unusualTime,
+            locationChange: engineered.locationChange,
+            highFrequency: engineered.velocityAlert,
+            unusualMerchant: engineered.structuringAlert || isDeviceUsedByOthers
+          }
+        });
+        explanation = explanationResult.explanation;
+      } catch (e) {
+        explanation = `Heuristic Analysis: Transaction flagged due to ${riskLevel} deviation across ${[
+          engineered.amountRatio > 2 ? 'Volume' : null,
+          engineered.newDevice ? 'Device ID' : null,
+          engineered.locationChange ? 'Geographic Vector' : null,
+          isDeviceUsedByOthers ? 'Network Reuse' : null
+        ].filter(Boolean).join(', ')}. Probability of outlier behavior remains significant.`;
+      }
 
       const processedTx: Transaction = {
         ...initialTx,
@@ -161,13 +192,12 @@ export default function FraudShieldDashboard() {
         confidenceScore: scoringResult.confidenceScore,
         category: scoringResult.category as FraudCategory,
         riskLevel,
-        riskBreakdown: scoringResult.riskBreakdown,
-        explanation: explanationResult.explanation,
+        riskBreakdown: scoringResult.riskBreakdown as RiskBreakdown,
+        explanation,
         status: riskLevel === 'high' ? 'flagged' : 'cleared',
         crossUserFlag: isDeviceUsedByOthers
       };
 
-      // Replace the scanning transaction with the fully processed one
       setTransactions(prev => prev.map(t => t.id === txId ? processedTx : t));
       
       if (!silent) {
@@ -184,7 +214,7 @@ export default function FraudShieldDashboard() {
       if (!silent) {
         toast({
           title: "Protocol Failure",
-          description: "Internal analysis node timeout.",
+          description: "Internal analysis node timeout. Retrying with local heuristics...",
           variant: "destructive",
         });
       }
@@ -195,7 +225,7 @@ export default function FraudShieldDashboard() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Math.random() > 0.6 && !isProcessing) {
+      if (Math.random() > 0.7 && !isProcessing) {
         const userIds = Object.keys(profiles);
         const randomUserId = userIds[Math.floor(Math.random() * userIds.length)];
         const profile = profiles[randomUserId];
@@ -306,11 +336,11 @@ export default function FraudShieldDashboard() {
           <Button 
             variant="outline" 
             size="lg" 
-            className="flex items-center gap-3 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-base uppercase tracking-widest h-12 px-6"
-            onClick={() => handleProcessTransaction('USER_002', 145000, "London", "Unknown Android")}
+            className="flex items-center gap-3 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-lg uppercase tracking-widest h-14 px-8"
+            onClick={() => handleProcessTransaction('USER_002', 145000, "London", "vivo")}
             disabled={isProcessing}
           >
-            <ShieldAlert className="h-6 w-6" />
+            <ShieldAlert className="h-7 w-7" />
             Simulate_Fraud
           </Button>
         </div>
@@ -357,27 +387,27 @@ export default function FraudShieldDashboard() {
                   <FraudTypology transactions={transactions} />
                   
                   <motion.div className="cyber-card p-8 rounded-3xl space-y-6">
-                    <h4 className="text-base font-bold tracking-[0.3em] uppercase text-primary flex items-center gap-3">
-                      <Radar className="w-7 h-7" />
+                    <h4 className="text-xl font-bold tracking-[0.3em] uppercase text-primary flex items-center gap-4">
+                      <Radar className="w-8 h-8" />
                       Tactical Threat Radar
                     </h4>
                     <SpatialHeatmap transaction={selectedTransaction} history={transactions} />
                   </motion.div>
 
                   <motion.div className="cyber-card p-8 rounded-3xl space-y-6">
-                    <h4 className="text-base font-bold tracking-[0.3em] uppercase text-accent flex items-center gap-3">
-                      <Zap className="w-7 h-7" />
+                    <h4 className="text-xl font-bold tracking-[0.3em] uppercase text-accent flex items-center gap-4">
+                      <Zap className="w-8 h-8" />
                       Cross-User Intelligence
                     </h4>
                     <div className="space-y-6">
-                      <div className="p-6 rounded-2xl bg-foreground/5 border border-foreground/5 space-y-4">
-                        <span className="text-sm font-mono text-muted-foreground uppercase flex items-center gap-3">
-                          <ArrowRightLeft className="w-6 h-6" />
+                      <div className="p-8 rounded-2xl bg-foreground/5 border border-foreground/5 space-y-4">
+                        <span className="text-base font-mono text-muted-foreground uppercase flex items-center gap-4 font-bold">
+                          <ArrowRightLeft className="w-7 h-7" />
                           Device Reuse Tracker
                         </span>
                         <div className="flex justify-between items-end">
-                          <span className="text-6xl font-black">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
-                          <span className="text-xs text-destructive font-black tracking-widest">SHARED DEVICES</span>
+                          <span className="text-7xl font-black">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
+                          <span className="text-sm text-destructive font-black tracking-[0.2em]">SHARED DEVICES</span>
                         </div>
                       </div>
                     </div>
