@@ -51,7 +51,7 @@ export function StatCards({ transactions }: { transactions: Transaction[] }) {
       trend: { up: true, val: "+14%" }
     },
     {
-      title: "Operational Efficiency",
+      title: "Efficiency Gain",
       value: `${efficiencyGain}%`,
       label: "Review Time Saved",
       icon: Zap,
@@ -62,32 +62,32 @@ export function StatCards({ transactions }: { transactions: Transaction[] }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, i) => (
         <motion.div
           key={stat.title}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.1 }}
         >
-          <Card className="cyber-card relative overflow-hidden group p-2">
-            <div className={cn("absolute top-0 right-0 w-32 h-32 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110", stat.bg)} />
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{stat.title}</CardTitle>
-              <stat.icon className={cn("h-5 w-5", stat.color)} />
+          <Card className="cyber-card relative overflow-hidden group">
+            <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110", stat.bg)} />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{stat.title}</CardTitle>
+              <stat.icon className={cn("h-4 w-4", stat.color)} />
             </CardHeader>
             <CardContent>
-              <div className="flex items-baseline gap-3">
-                <div className="text-4xl font-black tracking-tighter">{stat.value}</div>
+              <div className="flex items-baseline gap-2">
+                <div className="text-2xl font-black tracking-tighter">{stat.value}</div>
                 <div className={cn(
-                  "text-xs font-bold flex items-center gap-1",
+                  "text-[10px] font-bold flex items-center gap-1",
                   stat.trend.up ? "text-emerald-500" : "text-destructive"
                 )}>
-                  {stat.trend.up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                  {stat.trend.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {stat.trend.val}
                 </div>
               </div>
-              <p className="text-[11px] text-muted-foreground font-mono mt-2 opacity-70 uppercase tracking-widest">{stat.label}</p>
+              <p className="text-[9px] text-muted-foreground font-mono mt-1 opacity-70 uppercase tracking-widest">{stat.label}</p>
             </CardContent>
           </Card>
         </motion.div>

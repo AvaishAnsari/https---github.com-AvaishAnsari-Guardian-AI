@@ -29,68 +29,66 @@ export function TransactionInputForm({ profiles, onAddTransaction, isLoading }: 
   };
 
   return (
-    <Card className="cyber-card border-primary/20 p-4">
-      <CardHeader className="pb-6">
-        <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-          <PlusCircle className="w-8 h-8" />
-          Ingest New Transaction
+    <Card className="cyber-card border-primary/20">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+          <PlusCircle className="w-4 h-4" />
+          Ingest Transaction
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-1 gap-8">
-            <div className="space-y-4">
-              <Label className="text-lg font-mono text-muted-foreground uppercase font-black tracking-widest">User Identity</Label>
-              <Select value={userId} onValueChange={setUserId}>
-                <SelectTrigger className="h-16 bg-white/5 border-white/10 text-xl font-bold">
-                  <SelectValue placeholder="Select User" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(profiles).map((profile) => (
-                    <SelectItem key={profile.userId} value={profile.userId} className="text-xl font-bold p-4">
-                      {profile.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-4">
-              <Label className="text-lg font-mono text-muted-foreground uppercase font-black tracking-widest">Amount (₹)</Label>
-              <Input 
-                type="number" 
-                value={amount} 
-                onChange={(e) => setAmount(e.target.value)} 
-                placeholder="0.00"
-                className="h-16 bg-white/5 border-white/10 text-2xl font-black"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-mono text-muted-foreground uppercase font-black tracking-widest">User Identity</Label>
+            <Select value={userId} onValueChange={setUserId}>
+              <SelectTrigger className="h-10 bg-white/5 border-white/10 text-xs font-bold">
+                <SelectValue placeholder="Select User" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(profiles).map((profile) => (
+                  <SelectItem key={profile.userId} value={profile.userId} className="text-xs font-bold">
+                    {profile.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="grid grid-cols-1 gap-8">
-            <div className="space-y-4">
-              <Label className="text-lg font-mono text-muted-foreground uppercase font-black tracking-widest">Location</Label>
+          <div className="space-y-2">
+            <Label className="text-[10px] font-mono text-muted-foreground uppercase font-black tracking-widest">Amount (₹)</Label>
+            <Input 
+              type="number" 
+              value={amount} 
+              onChange={(e) => setAmount(e.target.value)} 
+              placeholder="0.00"
+              className="h-10 bg-white/5 border-white/10 text-xs font-black"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-mono text-muted-foreground uppercase font-black tracking-widest">Location</Label>
               <Input 
                 value={location} 
                 onChange={(e) => setLocation(e.target.value)} 
-                placeholder="e.g. London"
-                className="h-16 bg-white/5 border-white/10 text-xl font-bold"
+                placeholder="London"
+                className="h-10 bg-white/5 border-white/10 text-xs font-bold"
               />
             </div>
-            <div className="space-y-4">
-              <Label className="text-lg font-mono text-muted-foreground uppercase font-black tracking-widest">Device</Label>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-mono text-muted-foreground uppercase font-black tracking-widest">Device</Label>
               <Input 
                 value={device} 
                 onChange={(e) => setDevice(e.target.value)} 
-                placeholder="e.g. Unknown Device"
-                className="h-16 bg-white/5 border-white/10 text-xl font-bold"
+                placeholder="iPhone 15"
+                className="h-10 bg-white/5 border-white/10 text-xs font-bold"
               />
             </div>
           </div>
           <Button 
             type="submit" 
             disabled={isLoading || !userId || !amount}
-            className="w-full h-20 text-xl font-black uppercase tracking-[0.3em] shadow-2xl hover:shadow-primary/40 transition-all mt-4"
+            className="w-full h-12 text-xs font-black uppercase tracking-[0.3em] shadow-xl hover:shadow-primary/40 transition-all mt-2"
           >
-            {isLoading ? <Loader2 className="w-8 h-8 animate-spin mr-4" /> : "Initiate Analysis"}
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Initiate Analysis"}
           </Button>
         </form>
       </CardContent>
