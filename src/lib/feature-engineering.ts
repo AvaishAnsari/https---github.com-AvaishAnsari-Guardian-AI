@@ -1,9 +1,10 @@
 import { Transaction, UserProfile, EngineeredFeatures } from './types';
 
 export function engineerFeatures(transaction: Transaction, profile: UserProfile, history: Transaction[]): EngineeredFeatures {
-  const amountRatio = transaction.amount / profile.averageAmount;
+  const amountRatio = transaction.amount / (profile.averageAmount || 1);
   
-  const txHour = new Date(transaction.timestamp).getHours();
+  const txDate = new Date(transaction.timestamp);
+  const txHour = txDate.getHours();
   const [startHour] = profile.typicalTimeRange.start.split(':').map(Number);
   const [endHour] = profile.typicalTimeRange.end.split(':').map(Number);
   
@@ -22,7 +23,10 @@ export function engineerFeatures(transaction: Transaction, profile: UserProfile,
   const velocityAlert = last5Mins.length >= 3;
 
   // B. Amount Splitting (Structuring)
-  const structuringAlert = last5Mins.length >= 2 && last5Mins.every(h => Math.abs(h.amount - transaction.amount) < 10);
+  const structuringAlert = last5Mins.length >= 2 && last5Mins.every(h => Math.abs(h.amount - transaction.amount) < 50);
+
+  // C. Burst Transfer to New Beneficiary
+  const newBeneficiaryAlert = transaction.beneficiaryStatus === 'new';
 
   return {
     amountRatio,
@@ -30,7 +34,8 @@ export function engineerFeatures(transaction: Transaction, profile: UserProfile,
     locationChange,
     newDevice,
     velocityAlert,
-    structuringAlert
+    structuringAlert,
+    newBeneficiaryAlert
   };
 }
 

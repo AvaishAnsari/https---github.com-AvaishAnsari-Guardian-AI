@@ -100,6 +100,7 @@ export default function FraudShieldDashboard() {
       location,
       device,
       timestamp: new Date().toISOString(),
+      beneficiaryStatus: Math.random() > 0.8 ? 'new' : 'trusted',
       status: 'pending',
       investigationStatus: 'pending'
     };
@@ -116,7 +117,7 @@ export default function FraudShieldDashboard() {
       const isDeviceUsedByOthers = deviceRegistry[device] && deviceRegistry[device].some(uid => uid !== userId);
       engineered.deviceReuseAlert = isDeviceUsedByOthers;
 
-      if (!silent) await new Promise(r => setTimeout(r, 1200));
+      if (!silent) await new Promise(r => setTimeout(r, 1500));
 
       let scoringResult;
       try {
@@ -130,32 +131,29 @@ export default function FraudShieldDashboard() {
           userProfile: profile
         });
       } catch (e) {
-        // AI Failure Fallback: Heuristic Engine
-        const baseRisk = (engineered.amountRatio > 5 ? 40 : engineered.amountRatio > 2 ? 20 : 0) +
+        // AI Failure Fallback: High-Performance Heuristic Engine
+        const baseRisk = (engineered.amountRatio > 5 ? 50 : engineered.amountRatio > 2 ? 30 : 0) +
                          (engineered.newDevice ? 20 : 0) +
                          (engineered.locationChange ? 20 : 0) +
-                         (engineered.velocityAlert ? 30 : 0) +
+                         (engineered.velocityAlert ? 40 : 0) +
+                         (engineered.newBeneficiaryAlert ? 30 : 0) +
                          (isDeviceUsedByOthers ? 15 : 0);
         
         scoringResult = {
           riskScore: Math.min(100, baseRisk),
-          confidenceScore: 82,
-          category: engineered.velocityAlert ? 'Velocity Risk' : engineered.locationChange ? 'Geolocation Risk' : 'Behavioral Anomaly',
+          confidenceScore: 88,
+          category: engineered.velocityAlert ? 'Velocity Risk' : engineered.newBeneficiaryAlert ? 'Pattern-Based Fraud' : 'Behavioral Anomaly',
           riskBreakdown: {
-            amountRisk: engineered.amountRatio > 2 ? 25 : 5,
+            amountRisk: Math.min(30, engineered.amountRatio * 5),
             deviceRisk: engineered.newDevice ? 15 : 2,
             locationRisk: engineered.locationChange ? 15 : 2,
             timeRisk: engineered.unusualTime ? 10 : 2,
-            patternRisk: engineered.velocityAlert ? 25 : 5
+            patternRisk: (engineered.velocityAlert ? 15 : 0) + (engineered.newBeneficiaryAlert ? 15 : 0)
           }
         };
       }
 
       let finalRiskScore = scoringResult.riskScore;
-      const recentFlags = transactions.filter(t => t.userId === userId && t.status === 'flagged' && (Date.now() - new Date(t.timestamp).getTime()) < 3600000).length;
-      if (recentFlags > 1) finalRiskScore = Math.min(100, finalRiskScore + 15);
-      if (isDeviceUsedByOthers) finalRiskScore = Math.min(100, finalRiskScore + 10);
-
       const riskLevel = finalRiskScore >= config.thresholds.high ? 'high' : finalRiskScore >= config.thresholds.medium ? 'medium' : 'low';
 
       let explanation;
@@ -167,23 +165,24 @@ export default function FraudShieldDashboard() {
           device: initialTx.device,
           timestamp: initialTx.timestamp,
           riskScore: finalRiskScore,
+          amountRatio: engineered.amountRatio,
           reasons: {
             amountSignificantDeviation: engineered.amountRatio > 2,
             newDeviceDetected: engineered.newDevice,
             unusualTime: engineered.unusualTime,
             locationChange: engineered.locationChange,
             highFrequency: engineered.velocityAlert,
-            unusualMerchant: engineered.structuringAlert || isDeviceUsedByOthers
+            unusualMerchant: engineered.structuringAlert || isDeviceUsedByOthers,
+            newBeneficiary: engineered.newBeneficiaryAlert
           }
         });
         explanation = explanationResult.explanation;
       } catch (e) {
-        explanation = `Heuristic Analysis: Transaction flagged due to ${riskLevel} deviation across ${[
-          engineered.amountRatio > 2 ? 'Volume' : null,
-          engineered.newDevice ? 'Device ID' : null,
-          engineered.locationChange ? 'Geographic Vector' : null,
-          isDeviceUsedByOthers ? 'Network Reuse' : null
-        ].filter(Boolean).join(', ')}. Probability of outlier behavior remains significant.`;
+        explanation = `Institutional Heuristics: Flagged due to ${engineered.amountRatio.toFixed(1)}x volume deviation combined with ${[
+          engineered.newDevice ? 'unrecognized device signature' : null,
+          engineered.newBeneficiaryAlert ? 'new beneficiary transfer' : null,
+          engineered.locationChange ? 'geographic anomaly' : null
+        ].filter(Boolean).join(' and ')}.`;
       }
 
       const processedTx: Transaction = {
@@ -205,16 +204,16 @@ export default function FraudShieldDashboard() {
           setAlertTx(processedTx);
         } else {
           toast({
-            title: "Analysis Complete",
-            description: `Entity verified as ${riskLevel.toUpperCase()} risk.`,
+            title: "Entity Analysis Complete",
+            description: `Risk Level: ${riskLevel.toUpperCase()}. Pattern verified.`,
           });
         }
       }
     } catch (error) {
       if (!silent) {
         toast({
-          title: "Protocol Failure",
-          description: "Internal analysis node timeout. Retrying with local heuristics...",
+          title: "Protocol Interrupted",
+          description: "Analysis bridge timeout. Check network status.",
           variant: "destructive",
         });
       }
@@ -225,11 +224,11 @@ export default function FraudShieldDashboard() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Math.random() > 0.7 && !isProcessing) {
+      if (Math.random() > 0.6 && !isProcessing) {
         const userIds = Object.keys(profiles);
         const randomUserId = userIds[Math.floor(Math.random() * userIds.length)];
         const profile = profiles[randomUserId];
-        const amount = profile.averageAmount * (0.8 + Math.random() * 0.4);
+        const amount = profile.averageAmount * (0.5 + Math.random() * 0.8);
         const location = profile.typicalLocations[Math.floor(Math.random() * profile.typicalLocations.length)];
         const device = profile.typicalDevices[Math.floor(Math.random() * profile.typicalDevices.length)];
         handleProcessTransaction(randomUserId, Math.round(amount), location, device, true);
@@ -264,8 +263,8 @@ export default function FraudShieldDashboard() {
         };
       });
       toast({
-        title: "Model Adapted",
-        description: "Profile updated to include new behavioral patterns.",
+        title: "Adaptive Learning Triggered",
+        description: "User behavioral profile updated with new baseline data.",
       });
     }
 
@@ -273,7 +272,7 @@ export default function FraudShieldDashboard() {
     if (status === 'blocked') {
       toast({
         title: "Threat Neutralized",
-        description: `Entity blocked. Intelligence shared across nodes.`,
+        description: "Transaction blocked. Intelligence distributed to institutional nodes.",
         variant: "destructive"
       });
     }
@@ -285,40 +284,40 @@ export default function FraudShieldDashboard() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden selection:bg-primary/30">
-      <header className="flex h-24 items-center justify-between border-b border-foreground/5 px-10 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
-        <div className="flex items-center gap-8">
+      <header className="flex h-28 items-center justify-between border-b border-foreground/5 px-12 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
+        <div className="flex items-center gap-10">
           <motion.div 
             initial={{ rotate: -180, opacity: 0 }}
             animate={{ rotate: 0, opacity: 1 }}
-            className="bg-primary/20 p-4 rounded-2xl border border-primary/30"
+            className="bg-primary/20 p-5 rounded-2xl border border-primary/30"
           >
-            <Shield className="h-10 w-10 text-primary" />
+            <Shield className="h-12 w-12 text-primary" />
           </motion.div>
           <div className="flex flex-col">
-            <h1 className="text-4xl font-black tracking-widest bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase">
+            <h1 className="text-5xl font-black tracking-widest bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase leading-none">
               FraudShield AI
             </h1>
-            <span className="text-sm font-mono text-muted-foreground tracking-[0.4em] uppercase opacity-60">
-              Enterprise Hub v3.2.0 | {role.replace('_', ' ')} active
+            <span className="text-base font-mono text-muted-foreground tracking-[0.4em] uppercase opacity-60 mt-2">
+              Adaptive Intelligence Mesh v3.2.0 | {role.replace('_', ' ')}
             </span>
           </div>
         </div>
         
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-10">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={toggleTheme}
-            className="rounded-full w-12 h-12 hover:bg-foreground/5"
+            className="rounded-full w-14 h-14 hover:bg-foreground/5"
           >
-            {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+            {theme === 'dark' ? <Sun className="h-8 w-8" /> : <Moon className="h-8 w-8" />}
           </Button>
 
           <div className="flex bg-foreground/5 rounded-full p-2 border border-foreground/5">
             <Button 
               variant={role === 'analyst' ? 'default' : 'ghost'} 
               size="sm" 
-              className="h-10 text-base font-bold uppercase rounded-full px-8"
+              className="h-12 text-lg font-bold uppercase rounded-full px-10"
               onClick={() => setRole('analyst')}
             >
               Analyst
@@ -326,7 +325,7 @@ export default function FraudShieldDashboard() {
             <Button 
               variant={role === 'risk_manager' ? 'default' : 'ghost'} 
               size="sm" 
-              className="h-10 text-base font-bold uppercase rounded-full px-8"
+              className="h-12 text-lg font-bold uppercase rounded-full px-10"
               onClick={() => setRole('risk_manager')}
             >
               Manager
@@ -336,23 +335,23 @@ export default function FraudShieldDashboard() {
           <Button 
             variant="outline" 
             size="lg" 
-            className="flex items-center gap-3 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-lg uppercase tracking-widest h-14 px-8"
-            onClick={() => handleProcessTransaction('USER_002', 145000, "London", "vivo")}
+            className="flex items-center gap-4 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-xl uppercase tracking-widest h-16 px-10"
+            onClick={() => handleProcessTransaction('USER_002', 145000, "London", "vivo_x100")}
             disabled={isProcessing}
           >
-            <ShieldAlert className="h-7 w-7" />
-            Simulate_Fraud
+            <ShieldAlert className="h-8 w-8" />
+            Trigger_Fraud_Simulation
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden p-10">
-        <div className="mx-auto max-w-[1800px] h-full flex flex-col gap-10">
+      <main className="flex-1 overflow-hidden p-12">
+        <div className="mx-auto max-w-[1900px] h-full flex flex-col gap-12">
           
           <StatCards transactions={transactions} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-1 min-h-0">
-            <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-10 min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 flex-1 min-h-0">
+            <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-12 min-h-0">
               {role === 'risk_manager' ? (
                 <AdminSettings config={config} onUpdate={setConfig} />
               ) : (
@@ -371,8 +370,8 @@ export default function FraudShieldDashboard() {
             </div>
 
             <div className="lg:col-span-8 xl:col-span-9 min-h-0 overflow-y-auto pr-4 custom-scrollbar">
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
-                <div className="xl:col-span-8 space-y-10">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-12">
+                <div className="xl:col-span-8 space-y-12">
                   <AnalysisPanel 
                     transaction={selectedTransaction} 
                     profile={selectedProfile}
@@ -383,31 +382,31 @@ export default function FraudShieldDashboard() {
                   <RiskTrendChart transactions={transactions} />
                 </div>
                 
-                <div className="xl:col-span-4 space-y-10">
+                <div className="xl:col-span-4 space-y-12">
                   <FraudTypology transactions={transactions} />
                   
-                  <motion.div className="cyber-card p-8 rounded-3xl space-y-6">
-                    <h4 className="text-xl font-bold tracking-[0.3em] uppercase text-primary flex items-center gap-4">
-                      <Radar className="w-8 h-8" />
+                  <motion.div className="cyber-card p-10 rounded-3xl space-y-8">
+                    <h4 className="text-2xl font-bold tracking-[0.3em] uppercase text-primary flex items-center gap-5">
+                      <Radar className="w-10 h-10" />
                       Tactical Threat Radar
                     </h4>
                     <SpatialHeatmap transaction={selectedTransaction} history={transactions} />
                   </motion.div>
 
-                  <motion.div className="cyber-card p-8 rounded-3xl space-y-6">
-                    <h4 className="text-xl font-bold tracking-[0.3em] uppercase text-accent flex items-center gap-4">
-                      <Zap className="w-8 h-8" />
-                      Cross-User Intelligence
+                  <motion.div className="cyber-card p-10 rounded-3xl space-y-8">
+                    <h4 className="text-2xl font-bold tracking-[0.3em] uppercase text-accent flex items-center gap-5">
+                      <Zap className="w-10 h-10" />
+                      Intelligence Network
                     </h4>
-                    <div className="space-y-6">
-                      <div className="p-8 rounded-2xl bg-foreground/5 border border-foreground/5 space-y-4">
-                        <span className="text-base font-mono text-muted-foreground uppercase flex items-center gap-4 font-bold">
-                          <ArrowRightLeft className="w-7 h-7" />
-                          Device Reuse Tracker
+                    <div className="space-y-8">
+                      <div className="p-10 rounded-2xl bg-foreground/5 border border-foreground/5 space-y-6">
+                        <span className="text-lg font-mono text-muted-foreground uppercase flex items-center gap-5 font-bold">
+                          <ArrowRightLeft className="w-8 h-8" />
+                          Device Reuse Analysis
                         </span>
                         <div className="flex justify-between items-end">
-                          <span className="text-7xl font-black">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
-                          <span className="text-sm text-destructive font-black tracking-[0.2em]">SHARED DEVICES</span>
+                          <span className="text-8xl font-black">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
+                          <span className="text-base text-destructive font-black tracking-[0.2em]">NODES_REUSED</span>
                         </div>
                       </div>
                     </div>

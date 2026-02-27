@@ -32,6 +32,8 @@ export interface Transaction {
   location: string;
   device: string;
   timestamp: string;
+  beneficiaryName?: string;
+  beneficiaryStatus?: 'new' | 'trusted';
   riskScore?: number;
   confidenceScore?: number;
   riskLevel?: RiskLevel;
@@ -41,7 +43,7 @@ export interface Transaction {
   status: 'pending' | 'flagged' | 'cleared' | 'blocked' | 'approved';
   investigationStatus: InvestigationStatus;
   analystNotes?: string;
-  crossUserFlag?: boolean; // New: Flag for suspicious device reuse
+  crossUserFlag?: boolean;
 }
 
 export interface EngineeredFeatures {
@@ -51,7 +53,8 @@ export interface EngineeredFeatures {
   newDevice: boolean;
   velocityAlert: boolean;
   structuringAlert: boolean;
-  deviceReuseAlert?: boolean; // New: Intelligence from other users
+  deviceReuseAlert?: boolean;
+  newBeneficiaryAlert?: boolean;
 }
 
 export interface SystemConfig {
