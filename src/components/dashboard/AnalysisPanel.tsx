@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BrainCircuit, Loader2, Download, Info, Clock, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { ModelGovernance } from "./ModelGovernance";
+import { RiskTrendChart } from "./RiskTrendChart";
 
 interface AnalysisPanelProps {
   transaction: Transaction | null;
@@ -154,6 +155,9 @@ export function AnalysisPanel({ transaction, profile, history, onAction, onUpdat
             onChange={(e) => onUpdateNotes(transaction.id, e.target.value)}
           />
         </div>
+
+        <RiskTrendChart />
+        <ModelGovernance />
 
         {!isScanning && transaction.investigationStatus === 'pending' && (
           <div className="flex gap-6 pt-8">
