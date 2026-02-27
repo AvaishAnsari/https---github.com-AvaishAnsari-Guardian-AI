@@ -8,21 +8,16 @@ import { cn } from "@/lib/utils";
 import { Transaction } from "@/lib/types";
 
 export function StatCards({ transactions }: { transactions: Transaction[] }) {
-  // Real-time calculated metrics for the session
   const flaggedCount = transactions.filter(t => t.status === 'flagged' || t.status === 'blocked').length;
   const approvedCount = transactions.filter(t => t.investigationStatus === 'false_positive').length;
 
-  // Institutional Baseline to ensure realistic metrics during demo
-  // 1 baseline approved / 14 baseline flagged ≈ 7.14%
   const baselineFlagged = 14;
   const baselineApproved = 1;
   
   const totalFlags = flaggedCount + baselineFlagged;
   const totalApproved = approvedCount + baselineApproved;
 
-  // Accuracy remains strong at 94.8% baseline
   const accuracy = 94.8; 
-  // Calculate FP rate using session data + historical baseline
   const fpRate = ((totalApproved / totalFlags) * 100).toFixed(1);
   
   const protectedCapital = transactions.reduce((acc, t) => t.status === 'blocked' ? acc + t.amount : acc, 4520000);
@@ -68,7 +63,7 @@ export function StatCards({ transactions }: { transactions: Transaction[] }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {stats.map((stat, i) => (
         <motion.div
           key={stat.title}
@@ -76,24 +71,24 @@ export function StatCards({ transactions }: { transactions: Transaction[] }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.1 }}
         >
-          <Card className="cyber-card relative overflow-hidden group">
-            <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110", stat.bg)} />
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{stat.title}</CardTitle>
-              <stat.icon className={cn("h-3.5 w-3.5", stat.color)} />
+          <Card className="cyber-card relative overflow-hidden group p-2">
+            <div className={cn("absolute top-0 right-0 w-32 h-32 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110", stat.bg)} />
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{stat.title}</CardTitle>
+              <stat.icon className={cn("h-5 w-5", stat.color)} />
             </CardHeader>
             <CardContent>
-              <div className="flex items-baseline gap-2">
-                <div className="text-2xl font-black tracking-tighter">{stat.value}</div>
+              <div className="flex items-baseline gap-3">
+                <div className="text-4xl font-black tracking-tighter">{stat.value}</div>
                 <div className={cn(
-                  "text-[9px] font-bold flex items-center gap-0.5",
+                  "text-xs font-bold flex items-center gap-1",
                   stat.trend.up ? "text-emerald-500" : "text-destructive"
                 )}>
-                  {stat.trend.up ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                  {stat.trend.up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                   {stat.trend.val}
                 </div>
               </div>
-              <p className="text-[9px] text-muted-foreground font-mono mt-1 opacity-70 uppercase">{stat.label}</p>
+              <p className="text-[11px] text-muted-foreground font-mono mt-2 opacity-70 uppercase tracking-widest">{stat.label}</p>
             </CardContent>
           </Card>
         </motion.div>

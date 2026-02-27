@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -28,68 +29,68 @@ export function TransactionInputForm({ onAddTransaction, isLoading }: Transactio
   };
 
   return (
-    <Card className="cyber-card border-primary/20">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-          <PlusCircle className="w-4 h-4" />
+    <Card className="cyber-card border-primary/20 p-2">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-primary flex items-center gap-3">
+          <PlusCircle className="w-5 h-5" />
           Ingest New Transaction
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-mono text-muted-foreground uppercase">User Identity</Label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-3">
+              <Label className="text-xs font-mono text-muted-foreground uppercase font-bold tracking-widest">User Identity</Label>
               <Select value={userId} onValueChange={setUserId}>
-                <SelectTrigger className="h-9 bg-white/5 border-white/10 text-xs">
+                <SelectTrigger className="h-11 bg-white/5 border-white/10 text-sm">
                   <SelectValue placeholder="Select User" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(MOCK_PROFILES).map((profile) => (
-                    <SelectItem key={profile.userId} value={profile.userId} className="text-xs">
+                    <SelectItem key={profile.userId} value={profile.userId} className="text-sm">
                       {profile.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-mono text-muted-foreground uppercase">Amount (₹)</Label>
+            <div className="space-y-3">
+              <Label className="text-xs font-mono text-muted-foreground uppercase font-bold tracking-widest">Amount (₹)</Label>
               <Input 
                 type="number" 
                 value={amount} 
                 onChange={(e) => setAmount(e.target.value)} 
                 placeholder="0.00"
-                className="h-9 bg-white/5 border-white/10 text-xs"
+                className="h-11 bg-white/5 border-white/10 text-sm"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-mono text-muted-foreground uppercase">Location</Label>
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-3">
+              <Label className="text-xs font-mono text-muted-foreground uppercase font-bold tracking-widest">Location</Label>
               <Input 
                 value={location} 
                 onChange={(e) => setLocation(e.target.value)} 
                 placeholder="e.g. London"
-                className="h-9 bg-white/5 border-white/10 text-xs"
+                className="h-11 bg-white/5 border-white/10 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-mono text-muted-foreground uppercase">Device</Label>
+            <div className="space-y-3">
+              <Label className="text-xs font-mono text-muted-foreground uppercase font-bold tracking-widest">Device</Label>
               <Input 
                 value={device} 
                 onChange={(e) => setDevice(e.target.value)} 
                 placeholder="e.g. Unknown Device"
-                className="h-9 bg-white/5 border-white/10 text-xs"
+                className="h-11 bg-white/5 border-white/10 text-sm"
               />
             </div>
           </div>
           <Button 
             type="submit" 
             disabled={isLoading || !userId || !amount}
-            className="w-full h-9 text-[10px] font-bold uppercase tracking-[0.2em]"
+            className="w-full h-12 text-xs font-black uppercase tracking-[0.3em]"
           >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Initiate Analysis"}
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : "Initiate Analysis"}
           </Button>
         </form>
       </CardContent>

@@ -17,7 +17,7 @@ import { SpatialHeatmap } from "@/components/dashboard/SpatialHeatmap";
 import { FraudTypology } from "@/components/dashboard/FraudTypology";
 import { AdminSettings } from "@/components/dashboard/AdminSettings";
 import { Button } from "@/components/ui/button";
-import { Shield, Radar, Zap, ShieldAlert, Settings, ArrowRightLeft, Sun, Moon } from "lucide-react";
+import { Shield, Radar, Zap, ShieldAlert, Sun, Moon, ArrowRightLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
@@ -39,7 +39,6 @@ export default function FraudShieldDashboard() {
     }));
   });
 
-  // Auto-select the first (usually high-risk) transaction to avoid empty center panel
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -222,40 +221,40 @@ export default function FraudShieldDashboard() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden selection:bg-primary/30">
-      <header className="flex h-16 items-center justify-between border-b border-foreground/5 px-6 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
-        <div className="flex items-center gap-4">
+      <header className="flex h-20 items-center justify-between border-b border-foreground/5 px-8 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
+        <div className="flex items-center gap-6">
           <motion.div 
             initial={{ rotate: -180, opacity: 0 }}
             animate={{ rotate: 0, opacity: 1 }}
-            className="bg-primary/20 p-2 rounded-xl border border-primary/30"
+            className="bg-primary/20 p-3 rounded-2xl border border-primary/30"
           >
-            <Shield className="h-6 w-6 text-primary" />
+            <Shield className="h-8 w-8 text-primary" />
           </motion.div>
           <div className="flex flex-col">
-            <h1 className="text-lg font-black tracking-widest bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase">
+            <h1 className="text-2xl font-black tracking-widest bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase">
               FraudShield AI
             </h1>
-            <span className="text-[9px] font-mono text-muted-foreground tracking-[0.3em] uppercase opacity-60">
+            <span className="text-xs font-mono text-muted-foreground tracking-[0.3em] uppercase opacity-60">
               Enterprise Hub v3.2.0 | {role.replace('_', ' ')} active
             </span>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={toggleTheme}
-            className="rounded-full w-8 h-8 hover:bg-foreground/5"
+            className="rounded-full w-10 h-10 hover:bg-foreground/5"
           >
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
 
-          <div className="flex bg-foreground/5 rounded-full p-1 border border-foreground/5">
+          <div className="flex bg-foreground/5 rounded-full p-1.5 border border-foreground/5">
             <Button 
               variant={role === 'analyst' ? 'default' : 'ghost'} 
               size="sm" 
-              className="h-7 text-[9px] font-bold uppercase rounded-full px-4"
+              className="h-9 text-xs font-bold uppercase rounded-full px-6"
               onClick={() => setRole('analyst')}
             >
               Analyst
@@ -263,7 +262,7 @@ export default function FraudShieldDashboard() {
             <Button 
               variant={role === 'risk_manager' ? 'default' : 'ghost'} 
               size="sm" 
-              className="h-7 text-[9px] font-bold uppercase rounded-full px-4"
+              className="h-9 text-xs font-bold uppercase rounded-full px-6"
               onClick={() => setRole('risk_manager')}
             >
               Manager
@@ -273,23 +272,23 @@ export default function FraudShieldDashboard() {
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex items-center gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-[10px] uppercase tracking-widest h-8"
+            className="flex items-center gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-xs uppercase tracking-widest h-10 px-4"
             onClick={() => handleProcessTransaction('USER_001', 95000, "Dubai", "Blackberry OS")}
             disabled={isProcessing}
           >
-            <ShieldAlert className="h-3.5 w-3.5" />
+            <ShieldAlert className="h-4 w-4" />
             Simulate_Fraud
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden p-6">
-        <div className="mx-auto max-w-[1600px] h-full flex flex-col gap-6">
+      <main className="flex-1 overflow-hidden p-8">
+        <div className="mx-auto max-w-[1700px] h-full flex flex-col gap-8">
           
           <StatCards transactions={transactions} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
-            <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0">
+            <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-8 min-h-0">
               {role === 'risk_manager' ? (
                 <AdminSettings config={config} onUpdate={setConfig} />
               ) : (
@@ -304,8 +303,8 @@ export default function FraudShieldDashboard() {
             </div>
 
             <div className="lg:col-span-8 xl:col-span-9 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                <div className="xl:col-span-8 space-y-6">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                <div className="xl:col-span-8 space-y-8">
                   <AnalysisPanel 
                     transaction={selectedTransaction} 
                     profile={selectedProfile}
@@ -316,31 +315,31 @@ export default function FraudShieldDashboard() {
                   <RiskTrendChart transactions={transactions} />
                 </div>
                 
-                <div className="xl:col-span-4 space-y-6">
+                <div className="xl:col-span-4 space-y-8">
                   <FraudTypology transactions={transactions} />
                   
-                  <motion.div className="cyber-card p-5 rounded-xl space-y-4">
-                    <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary flex items-center gap-2">
-                      <Radar className="w-4 h-4" />
+                  <motion.div className="cyber-card p-6 rounded-2xl space-y-5">
+                    <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-primary flex items-center gap-2">
+                      <Radar className="w-5 h-5" />
                       Tactical Threat Radar
                     </h4>
                     <SpatialHeatmap transaction={selectedTransaction} history={transactions} />
                   </motion.div>
 
-                  <motion.div className="cyber-card p-5 rounded-xl space-y-4">
-                    <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent flex items-center gap-2">
-                      <Zap className="w-4 h-4" />
+                  <motion.div className="cyber-card p-6 rounded-2xl space-y-5">
+                    <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-accent flex items-center gap-2">
+                      <Zap className="w-5 h-5" />
                       Cross-User Intelligence
                     </h4>
-                    <div className="space-y-3">
-                      <div className="p-3 rounded bg-foreground/5 border border-foreground/5 space-y-2">
-                        <span className="text-[8px] font-mono text-muted-foreground uppercase flex items-center gap-2">
-                          <ArrowRightLeft className="w-3 h-3" />
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-foreground/5 border border-foreground/5 space-y-3">
+                        <span className="text-[10px] font-mono text-muted-foreground uppercase flex items-center gap-2">
+                          <ArrowRightLeft className="w-4 h-4" />
                           Device Reuse Tracker
                         </span>
                         <div className="flex justify-between items-end">
-                          <span className="text-xl font-bold">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
-                          <span className="text-[9px] text-destructive font-bold">SHARED DEVICES</span>
+                          <span className="text-3xl font-black">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
+                          <span className="text-[10px] text-destructive font-black">SHARED DEVICES</span>
                         </div>
                       </div>
                     </div>
