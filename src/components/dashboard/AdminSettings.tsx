@@ -1,10 +1,11 @@
+
 "use client";
 
 import { SystemConfig } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Settings, Shield } from "lucide-react";
+import { Settings, ShieldCheck } from "lucide-react";
 
 interface AdminSettingsProps {
   config: SystemConfig;
@@ -23,18 +24,18 @@ export function AdminSettings({ config, onUpdate }: AdminSettingsProps) {
   };
 
   return (
-    <Card className="cyber-card border-accent/20">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
-          <Settings className="w-4 h-4" />
-          Enterprise Sensitivity
+    <Card className="cyber-card border-none shadow-sm flex flex-col h-full max-h-[500px]">
+      <CardHeader className="pb-6 border-b px-8 py-6">
+        <CardTitle className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-3">
+          <Settings className="w-5 h-5" />
+          Enterprise AI Policy & Sensitivity
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-3">
+      <CardContent className="flex-1 p-8 space-y-10 overflow-y-auto custom-scrollbar">
+        <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <Label className="text-[10px] font-mono text-muted-foreground uppercase">Low Threshold</Label>
-            <span className="text-[10px] font-bold">{config.thresholds.low}%</span>
+            <Label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Low Risk Threshold</Label>
+            <span className="text-sm font-black text-emerald-500">{config.thresholds.low}%</span>
           </div>
           <Slider 
             value={[config.thresholds.low]} 
@@ -43,12 +44,13 @@ export function AdminSettings({ config, onUpdate }: AdminSettingsProps) {
             step={1} 
             className="[&>span]:bg-emerald-500"
           />
+          <p className="text-[10px] text-muted-foreground font-black italic">Transactions below this score are automatically cleared for the majority of user profiles.</p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <Label className="text-[10px] font-mono text-muted-foreground uppercase">Medium Threshold</Label>
-            <span className="text-[10px] font-bold">{config.thresholds.medium}%</span>
+            <Label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Medium Risk Threshold</Label>
+            <span className="text-sm font-black text-amber-500">{config.thresholds.medium}%</span>
           </div>
           <Slider 
             value={[config.thresholds.medium]} 
@@ -57,12 +59,13 @@ export function AdminSettings({ config, onUpdate }: AdminSettingsProps) {
             step={1} 
             className="[&>span]:bg-amber-500"
           />
+          <p className="text-[10px] text-muted-foreground font-black italic">Triggers passive monitoring and potential multi-factor authentication requests.</p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <Label className="text-[10px] font-mono text-muted-foreground uppercase">High Threshold</Label>
-            <span className="text-[10px] font-bold">{config.thresholds.high}%</span>
+            <Label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">High Risk Block Policy</Label>
+            <span className="text-sm font-black text-destructive">{config.thresholds.high}%</span>
           </div>
           <Slider 
             value={[config.thresholds.high]} 
@@ -71,12 +74,19 @@ export function AdminSettings({ config, onUpdate }: AdminSettingsProps) {
             step={1} 
             className="[&>span]:bg-destructive"
           />
+          <p className="text-[10px] text-muted-foreground font-black italic">Scores exceeding this threshold trigger an immediate institutional block and analyst alert.</p>
         </div>
 
-        <div className="pt-2">
-          <p className="text-[8px] font-mono text-muted-foreground uppercase leading-relaxed opacity-60">
-            System sensitivity affects real-time block logic and alert propagation. Current policy: <span className="text-accent">AGGRESSIVE_MONITORING</span>
-          </p>
+        <div className="pt-6 border-t">
+          <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 flex items-start gap-4">
+            <ShieldCheck className="w-6 h-6 text-primary shrink-0" />
+            <div className="space-y-2">
+              <h5 className="text-[11px] font-black uppercase tracking-widest text-primary">Active Governance Mode</h5>
+              <p className="text-[10px] font-black text-muted-foreground uppercase leading-relaxed opacity-80">
+                Current sensitivity is set to <span className="text-primary underline">AGGRESSIVE_MONITORING</span>. Real-time weights are adjusting based on global threat telemetry from the intelligence mesh.
+              </p>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

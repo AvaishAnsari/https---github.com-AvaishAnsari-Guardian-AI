@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
@@ -13,10 +14,12 @@ import { TransactionInputForm } from "@/components/dashboard/TransactionInputFor
 import { FraudAlertNotification } from "@/components/dashboard/FraudAlertNotification";
 import { SpatialHeatmap } from "@/components/dashboard/SpatialHeatmap";
 import { FraudTypology } from "@/components/dashboard/FraudTypology";
+import { AdminSettings } from "@/components/dashboard/AdminSettings";
 import { Button } from "@/components/ui/button";
 import { Shield, ShieldAlert, Sun, Moon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default function FraudShieldDashboard() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -261,48 +264,50 @@ export default function FraudShieldDashboard() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
+    <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden font-bold">
       <header className="flex h-16 items-center justify-between border-b bg-card px-8 shrink-0">
         <div className="flex items-center gap-4">
           <Shield className="h-6 w-6 text-primary" />
           <div className="flex flex-col">
-            <h1 className="text-lg font-bold tracking-tight text-primary uppercase leading-none">
+            <h1 className="text-lg font-black tracking-tight text-primary uppercase leading-none">
               FraudShield AI
             </h1>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest opacity-70">
-              Enterprise Hub v3.2.0 | {role} Active
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest opacity-70 font-black">
+              Enterprise Hub v3.2.0 | {role === 'analyst' ? 'Analyst' : 'Risk Manager'} Active
             </span>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
+          <div className="flex bg-[#f1f5f9] rounded-full p-1 border border-[#e2e8f0]">
+            <button 
+              onClick={() => setRole('analyst')}
+              className={cn(
+                "px-6 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all",
+                role === 'analyst' ? "bg-white text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Analyst
+            </button>
+            <button 
+              onClick={() => setRole('risk_manager')}
+              className={cn(
+                "px-6 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all",
+                role === 'risk_manager' ? "bg-white text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Manager
+            </button>
+          </div>
+
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
-
-          <div className="flex bg-muted rounded-lg p-1">
-            <Button 
-              variant={role === 'analyst' ? 'primary' : 'ghost'} 
-              size="sm" 
-              className="h-7 text-[10px] font-bold uppercase"
-              onClick={() => setRole('analyst')}
-            >
-              Analyst
-            </Button>
-            <Button 
-              variant={role === 'risk_manager' ? 'primary' : 'ghost'} 
-              size="sm" 
-              className="h-7 text-[10px] font-bold uppercase"
-              onClick={() => setRole('risk_manager')}
-            >
-              Manager
-            </Button>
-          </div>
           
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-destructive/30 text-destructive hover:bg-destructive/10 text-[10px] font-bold uppercase h-8"
+            className="border-destructive/30 text-destructive hover:bg-destructive/10 text-[10px] font-black uppercase h-8"
             onClick={() => handleProcessTransaction('USER_002', 145000, "London", "vivo_x100")}
           >
             <ShieldAlert className="h-3 w-3 mr-2" />
@@ -333,20 +338,51 @@ export default function FraudShieldDashboard() {
 
             {/* Middle Column */}
             <div className="lg:col-span-6 min-h-0">
-              <AnalysisPanel 
-                transaction={selectedTransaction} 
-                profile={selectedProfile}
-                history={transactions}
-                onAction={handleAction}
-                onUpdateNotes={handleUpdateNotes}
-              />
+              <AnimatePresence mode="wait">
+                {role === 'analyst' ? (
+                  <motion.div
+                    key="analyst-view"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="h-full"
+                  >
+                    <AnalysisPanel 
+                      transaction={selectedTransaction} 
+                      profile={selectedProfile}
+                      history={transactions}
+                      onAction={handleAction}
+                      onUpdateNotes={handleUpdateNotes}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="manager-view"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="h-full"
+                  >
+                    <div className="flex flex-col gap-6 h-full">
+                      <AdminSettings config={config} onUpdate={setConfig} />
+                      <div className="flex-1 cyber-card p-8 flex items-center justify-center border-dashed">
+                        <div className="text-center space-y-4">
+                          <Shield className="w-16 h-16 text-primary mx-auto opacity-20" />
+                          <h3 className="text-xl font-black uppercase tracking-widest text-muted-foreground">Global Policy View</h3>
+                          <p className="text-sm text-muted-foreground font-black max-w-md">The system is currently operating under institutional constraints. All behavioral profiles are being updated in real-time across the intelligence mesh.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Right Column */}
             <div className="lg:col-span-3 flex flex-col gap-6 min-h-0">
               <FraudTypology transactions={transactions} />
               <div className="flex-1 cyber-card p-6">
-                <h4 className="text-[10px] font-bold tracking-widest uppercase text-primary flex items-center gap-2 mb-4">
+                <h4 className="text-[10px] font-black tracking-widest uppercase text-primary flex items-center gap-2 mb-4">
                   Tactical Threat Radar
                 </h4>
                 <SpatialHeatmap transaction={selectedTransaction} history={transactions} />
