@@ -5,22 +5,22 @@
 ### **A. AI Orchestration (Genkit Framework)**
 The application uses the **Google Genkit Framework** to orchestrate "Flows." These flows act as high-level AI pipelines that combine deterministic logic (code) with probabilistic reasoning (LLM).
 
-### **B. LLM Reasoning (Gemini 2.5 Flash)**
-We utilize **Gemini 2.5 Flash** for two primary cognitive tasks:
-- **Hybrid Risk Scoring**: Instead of a simple fixed formula, the LLM analyzes a "Feature Vector" (Amount Ratio, Geolocation change, Device signature) to assign a nuanced risk score (0-100).
-- **Fraud Typology Classification**: The model categorizes threats into specific archetypes like "Behavioral Anomaly," "Velocity Risk," or "Geolocation Risk" based on behavioral context.
+### **B. Hybrid AI Risk Scoring Architecture**
+We implement a **Dual-Process Risk Engine**:
+- **Layer 1: Deterministic Feature Engineering**: A heuristic engine calculates technical deviations (Amount Ratio, Velocity Alerts, Geolocation change, Device signature) into a feature vector.
+- **Layer 2: LLM Reasoning (Gemini 2.5 Flash)**: This feature vector is passed to Gemini, which performs high-dimensional analysis to assign a nuanced risk score (0-100) and confidence level.
+- **Layer 3: Heuristic Fallback**: In the event of network latency or protocol node failure, a local rule-based system takes over to ensure zero-downtime monitoring.
 
 ### **C. Explainable AI (XAI)**
 A dedicated **Natural Language Generation (NLG)** agent converts raw boolean flags and technical deviations into human-readable narratives. This reduces "black-box" skepticism by explaining *why* a transaction was flagged (e.g., "Transaction is 32x the typical average").
 
-### **D. Feature Engineering (Preprocessing)**
-Before the AI processes data, a custom **Heuristic Engine** performs deterministic calculations:
+### **D. Pattern Recognition (Behavioral Analysis)**
 - **Velocity Analysis**: Detecting rapid-fire transactions within a 5-minute window.
 - **Structuring Detection**: Identifying attempts to split large sums into smaller, less noticeable transactions.
 - **Network Intelligence**: Cross-referencing device identifiers across multiple users to detect shared malicious hardware.
 
 ### **E. Adaptive Learning (Human-in-the-Loop)**
-The system implements **Online Learning** via an analyst feedback loop. When a "False Positive" is approved, the system dynamically updates the user's behavioral profile, effectively "teaching" the AI to recognize new safe vectors in real-time.
+The system implements **Online Profile Adaptation**. When an analyst manually approves a "False Positive," the system dynamically updates the user's behavioral profile (typical locations/devices), effectively "teaching" the AI to recognize new safe vectors in real-time.
 
 ## 2. Key Metrics
 - **Detection Accuracy**: 94.8% (Institutional Baseline)
