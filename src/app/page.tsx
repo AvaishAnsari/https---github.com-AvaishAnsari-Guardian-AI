@@ -183,7 +183,7 @@ export default function FraudShieldDashboard() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Math.random() > 0.8 && !isProcessing) {
+      if (Math.random() > 0.7 && !isProcessing) {
         const userIds = Object.keys(profiles);
         const randomUserId = userIds[Math.floor(Math.random() * userIds.length)];
         const profile = profiles[randomUserId];
@@ -192,7 +192,7 @@ export default function FraudShieldDashboard() {
         const device = profile.typicalDevices[Math.floor(Math.random() * profile.typicalDevices.length)];
         handleProcessTransaction(randomUserId, Math.round(amount), location, device, true);
       }
-    }, 12000);
+    }, 6000); // Increased frequency for "real-time" presentation feel
     return () => clearInterval(interval);
   }, [profiles, isProcessing, handleProcessTransaction]);
 

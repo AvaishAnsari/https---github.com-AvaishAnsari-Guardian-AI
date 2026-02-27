@@ -41,7 +41,7 @@ export function TransactionFeed({ transactions, onSelect }: TransactionFeedProps
             {highRiskTxs.map(tx => (
               <span key={tx.id} className="text-base font-mono text-destructive font-black uppercase flex items-center gap-3">
                 <AlertTriangle className="w-6 h-6" />
-                CRITICAL: {tx.userName} ({mounted ? `₹${tx.amount.toLocaleString()}` : ""}) - {tx.riskScore}% RISK
+                CRITICAL: {tx.userName} ({mounted ? `₹${tx.amount.toLocaleString()}` : "₹..."}) - {tx.riskScore}% RISK
               </span>
             ))}
             {highRiskTxs.length === 0 && (
