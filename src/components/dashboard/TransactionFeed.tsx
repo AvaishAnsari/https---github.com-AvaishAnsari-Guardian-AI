@@ -57,7 +57,7 @@ export function TransactionFeed({ transactions, onSelect }: TransactionFeedProps
                 <div className="flex items-end justify-between">
                   <div className="flex flex-col">
                     <span className="text-lg font-black tracking-tight leading-none">
-                      ₹{tx.amount.toLocaleString()}
+                      ₹{mounted ? tx.amount.toLocaleString() : tx.amount}
                     </span>
                     <span className="text-[10px] font-black text-muted-foreground uppercase mt-1">
                       {tx.location}

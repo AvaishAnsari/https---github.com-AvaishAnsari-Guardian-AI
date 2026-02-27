@@ -133,7 +133,7 @@ export function AnalysisPanel({ transaction, profile, history, onAction, onUpdat
               {userHistory.map((tx) => (
                 <div key={tx.id} className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground font-black">{mounted ? format(new Date(tx.timestamp), 'HH:mm:ss') : '--:--:--'}</span>
-                  <span className="font-black">₹{tx.amount.toLocaleString()}</span>
+                  <span className="font-black">₹{mounted ? tx.amount.toLocaleString() : tx.amount}</span>
                   <Badge variant={tx.riskLevel === 'high' ? 'destructive' : 'secondary'} className="text-[9px] px-2 h-5 font-black">
                     {tx.riskLevel?.toUpperCase()}
                   </Badge>
