@@ -5,19 +5,11 @@ import { Transaction, UserProfile } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BrainCircuit, AlertCircle, History, FileText, Download, ShieldAlert, Cpu, Fingerprint, Loader2 } from "lucide-react";
+import { BrainCircuit, Loader2, Download, Info, Clock, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { 
-  Radar, 
-  RadarChart, 
-  PolarGrid, 
-  PolarAngleAxis, 
-  ResponsiveContainer 
-} from 'recharts';
 import { format } from "date-fns";
-import { toast } from "@/hooks/use-toast";
 
 interface AnalysisPanelProps {
   transaction: Transaction | null;
@@ -36,276 +28,153 @@ export function AnalysisPanel({ transaction, profile, history, onAction, onUpdat
 
   if (!transaction || !profile) {
     return (
-      <Card className="h-full cyber-card border-dashed border-2 flex items-center justify-center min-h-[500px]">
-        <div className="text-center p-12 space-y-4 opacity-40">
-          <Fingerprint className="w-16 h-16 text-primary mx-auto animate-pulse-soft" />
-          <p className="text-xl font-mono tracking-widest uppercase font-black">Select Case for Investigation</p>
+      <Card className="h-full cyber-card border-dashed flex items-center justify-center min-h-[500px]">
+        <div className="text-center opacity-40">
+          <BrainCircuit className="w-12 h-12 text-primary mx-auto mb-4" />
+          <p className="text-xs font-bold uppercase tracking-widest">Select Case for Investigation</p>
         </div>
       </Card>
     );
   }
 
   const isScanning = transaction.status === 'pending';
-  const isHighRisk = transaction.riskLevel === 'high';
   const userHistory = history.filter(h => h.userId === transaction.userId).slice(-5).reverse();
 
-  const radarData = isScanning ? [
-    { subject: 'Volume', A: 50 },
-    { subject: 'Location', A: 50 },
-    { subject: 'Device', A: 50 },
-    { subject: 'Pattern', A: 50 },
-    { subject: 'Network', A: 50 },
-  ] : [
-    { subject: 'Volume', A: Math.min((transaction.amount / (profile.averageAmount || 1)) * 20, 100) },
-    { subject: 'Location', A: profile.typicalLocations.includes(transaction.location) ? 20 : 90 },
-    { subject: 'Device', A: profile.typicalDevices.includes(transaction.device) ? 10 : 95 },
-    { subject: 'Pattern', A: transaction.category !== 'Nominal' ? 95 : 20 },
-    { subject: 'Network', A: transaction.crossUserFlag ? 95 : 10 },
-  ];
-
-  const handleDownloadReport = () => {
-    toast({
-      title: "Generating Report",
-      description: `Fraud Intelligence Report for Case ${transaction.caseId} compiled.`,
-    });
-  };
-
   return (
-    <motion.div 
-      key={transaction.id}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <Card className="cyber-card border-border/40 overflow-hidden relative scanline">
-        <CardHeader className="bg-white/5 pb-8 border-b border-white/5">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <CardTitle className="text-xl font-black tracking-[0.2em] uppercase text-primary flex items-center gap-3">
-                <BrainCircuit className="w-6 h-6" />
-                Case Investigation Portal
-              </CardTitle>
-              <div className="flex gap-8">
-                <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest font-bold">Case_ID: <span className="text-foreground">{transaction.caseId}</span></p>
-                <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest font-bold">Category: <span className="text-accent">{isScanning ? "ANALYZING..." : transaction.category}</span></p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/10" onClick={handleDownloadReport}>
-                <Download className="w-5 h-5" />
-              </Button>
-              <Badge className={cn(
-                "text-[10px] px-6 py-2 font-black uppercase tracking-widest",
-                transaction.investigationStatus === 'confirmed_fraud' ? "bg-destructive" : transaction.investigationStatus === 'false_positive' ? "bg-emerald-500" : "bg-amber-500"
-              )}>
-                {isScanning ? "SCANNING" : transaction.investigationStatus.replace('_', ' ')}
-              </Badge>
-            </div>
+    <Card className="h-full cyber-card border-none shadow-sm flex flex-col relative overflow-hidden">
+      <CardHeader className="border-b px-8 py-6 flex flex-row items-center justify-between shrink-0">
+        <div className="space-y-1">
+          <CardTitle className="text-sm font-bold tracking-widest uppercase text-primary flex items-center gap-3">
+            <BrainCircuit className="w-4 h-4" />
+            Case Investigation Portal
+          </CardTitle>
+          <div className="flex gap-4 text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
+            <span>Case_ID: <span className="text-foreground">{transaction.caseId}</span></span>
+            <span>Category: <span className="text-primary">{isScanning ? "Analyzing..." : transaction.category}</span></span>
           </div>
-        </CardHeader>
-        <CardContent className="pt-8 space-y-12">
-          {transaction.crossUserFlag && (
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="p-5 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center gap-4 text-destructive"
-            >
-              <ShieldAlert className="w-8 h-8 animate-pulse" />
-              <span className="text-xs font-black uppercase tracking-[0.2em]">NETWORK INTELLIGENCE ALERT: Suspicious Device Reuse Across Users</span>
-            </motion.div>
-          )}
+        </div>
+        <div className="flex gap-3">
+          <Button variant="ghost" size="icon" className="h-8 w-8"><Download className="w-4 h-4" /></Button>
+          <Badge className={cn(
+            "text-[10px] font-bold uppercase tracking-widest px-3",
+            transaction.investigationStatus === 'confirmed_fraud' ? "bg-destructive" : transaction.investigationStatus === 'false_positive' ? "bg-emerald-500" : "bg-amber-500"
+          )}>
+            {isScanning ? "Pending" : transaction.investigationStatus.replace('_', ' ')}
+          </Badge>
+        </div>
+      </CardHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-10">
-               <div className="relative">
-                 <div className="flex justify-between items-end mb-6">
-                   <div className="flex flex-col">
-                     <span className="text-xs font-mono text-muted-foreground uppercase tracking-[0.3em] font-black">Neural Risk Score</span>
-                     <span className={cn(
-                       "text-8xl font-black italic tracking-tighter leading-none transition-all",
-                       isScanning ? "text-primary/40 animate-pulse" : isHighRisk ? "text-destructive" : "text-primary"
-                     )}>
-                       {isScanning ? "---" : transaction.riskScore}%
-                     </span>
-                   </div>
-                   <div className="flex flex-col items-end pb-4">
-                     <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest font-black">Confidence</span>
-                     <span className={cn(
-                       "text-4xl font-black transition-all",
-                       isScanning ? "text-accent/40 animate-pulse" : "text-accent"
-                     )}>
-                       {isScanning ? "--" : transaction.confidenceScore}%
-                     </span>
-                   </div>
-                 </div>
-                 <Progress value={isScanning ? 30 : transaction.riskScore} className={cn(
-                     "h-6 bg-white/5",
-                     isScanning ? "[&>div]:bg-primary/20 animate-pulse" : isHighRisk ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"
-                 )} />
-               </div>
-
-               <div className="space-y-6">
-                 <h5 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Factor Contribution Weights</h5>
-                 <div className="grid grid-cols-1 gap-4">
-                    {[
-                      { label: "Volume Ratio", val: transaction.riskBreakdown?.amountRisk, max: 30 },
-                      { label: "Device Integrity", val: transaction.riskBreakdown?.deviceRisk, max: 15 },
-                      { label: "Spatial Cluster", val: transaction.riskBreakdown?.locationRisk, max: 15 },
-                      { label: "Temporal Baseline", val: transaction.riskBreakdown?.timeRisk, max: 10 },
-                      { label: "Stream Patterns", val: transaction.riskBreakdown?.patternRisk, max: 30 },
-                    ].map((factor) => (
-                      <div key={factor.label} className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                        <div className="flex justify-between items-center mb-4">
-                          <span className="text-[10px] font-mono uppercase text-muted-foreground font-black tracking-widest">{factor.label}</span>
-                          <span className="text-sm font-black">
-                            {isScanning ? "--" : `${Math.round(((factor.val || 0) / factor.max) * 100)}%`}
-                          </span>
-                        </div>
-                        <Progress 
-                          value={isScanning ? 20 : ((factor.val || 0) / factor.max) * 100} 
-                          className={cn("h-1 bg-white/5", isScanning && "animate-pulse")} 
-                        />
-                      </div>
-                    ))}
-                 </div>
-               </div>
-            </div>
-
-            <div className="h-[400px] relative">
-              {isScanning && (
-                <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/20 backdrop-blur-sm rounded-full">
-                  <div className="flex flex-col items-center gap-6">
-                    <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                    <span className="text-xs font-mono font-black uppercase tracking-widest text-primary">Scanning Neural Vectors...</span>
-                  </div>
+      <CardContent className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
+        <div className="flex flex-col md:flex-row gap-12 items-start">
+          <div className="flex-1 space-y-8 w-full">
+            <div>
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest block mb-4">Aggregate Risk Score</span>
+              <div className="flex items-baseline gap-8">
+                <span className={cn(
+                  "text-7xl font-bold tracking-tighter italic",
+                  isScanning ? "text-muted animate-pulse" : transaction.riskLevel === 'high' ? "text-destructive" : "text-primary"
+                )}>
+                  {isScanning ? "---" : `${transaction.riskScore}%`}
+                </span>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Model Confidence</span>
+                  <span className="text-2xl font-bold text-primary/60">{isScanning ? "--" : `${transaction.confidenceScore}%`}</span>
                 </div>
-              )}
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                  <PolarGrid stroke="rgba(255,255,255,0.05)" />
-                  <PolarAngleAxis 
-                    dataKey="subject" 
-                    tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700 }} 
-                  />
-                  <Radar
-                    name="Deviation"
-                    dataKey="A"
-                    stroke={isScanning ? "hsl(var(--primary)/0.3)" : isHighRisk ? "hsl(var(--destructive))" : "hsl(var(--primary))"}
-                    fill={isScanning ? "hsl(var(--primary)/0.1)" : isHighRisk ? "hsl(var(--destructive))" : "hsl(var(--primary))"}
-                    fillOpacity={0.3}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
-            <div className="space-y-6">
-              <h4 className="text-sm font-black uppercase tracking-[0.2em] text-accent flex items-center gap-4">
-                <AlertCircle className="w-6 h-6" />
-                Explainable AI (XAI) Narrative
-              </h4>
-              <div className="p-6 h-[200px] rounded-2xl bg-white/5 border border-white/5 italic text-sm text-foreground/90 leading-relaxed font-mono relative overflow-hidden overflow-y-auto custom-scrollbar">
-                <div className="absolute top-0 left-0 w-2 h-full bg-accent" />
-                {isScanning ? (
-                  <div className="flex flex-col gap-6 animate-pulse">
-                    <div className="h-4 bg-white/10 rounded w-full" />
-                    <div className="h-4 bg-white/10 rounded w-5/6" />
-                    <div className="h-4 bg-white/10 rounded w-4/6" />
-                  </div>
-                ) : (
-                  transaction.explanation || "WAITING_FOR_NLG_STREAM..."
-                )}
               </div>
+              <Progress value={isScanning ? 30 : transaction.riskScore} className="h-2 mt-4 bg-muted" />
             </div>
 
-            <div className="space-y-6">
-              <h4 className="text-sm font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-                <History className="w-6 h-6" />
-                Entity Behavior Baseline
-              </h4>
-              <div className="space-y-4 max-h-[200px] overflow-y-auto pr-4 custom-scrollbar">
-                {userHistory.map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/5">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-mono text-muted-foreground uppercase font-black">{mounted ? format(new Date(tx.timestamp), 'HH:mm:ss') : '--:--:--'}</span>
-                      <span className="text-lg font-black">₹{mounted ? tx.amount.toLocaleString() : tx.amount}</span>
+            <div className="space-y-4">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest block">Risk Variance Decomposition</span>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {[
+                  { label: "Amount", val: transaction.riskBreakdown?.amountRisk, max: 30 },
+                  { label: "Device", val: transaction.riskBreakdown?.deviceRisk, max: 15 },
+                  { label: "Location", val: transaction.riskBreakdown?.locationRisk, max: 15 },
+                  { label: "Time", val: transaction.riskBreakdown?.timeRisk, max: 10 },
+                  { label: "Pattern", val: transaction.riskBreakdown?.patternRisk, max: 30 },
+                ].map((f) => (
+                  <div key={f.label} className="space-y-2">
+                    <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-tighter">
+                      <span className="text-muted-foreground">{f.label}</span>
+                      <span>{isScanning ? "--" : `${f.val}/${f.max}`}</span>
                     </div>
-                    <Badge variant={tx.riskLevel === 'high' ? 'destructive' : 'outline'} className="text-[10px] h-8 px-4 uppercase font-black tracking-widest">
-                      {tx.riskLevel}
-                    </Badge>
+                    <Progress value={isScanning ? 20 : ((f.val || 0) / f.max) * 100} className="h-1 bg-muted" />
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="pt-12 border-t border-white/5 flex flex-col gap-10">
-            <div className="space-y-6">
-               <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-4">
-                 <FileText className="w-6 h-6" />
-                 Investigative Commentary
-               </label>
-               <textarea 
-                className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-sm font-mono min-h-[120px] focus:outline-none focus:border-primary/50 transition-all"
-                placeholder="Log critical evidence..."
-                value={transaction.analystNotes || ""}
-                onChange={(e) => onUpdateNotes(transaction.id, e.target.value)}
-               />
-            </div>
-            {!isScanning && transaction.investigationStatus === 'pending' && (
-              <div className="flex gap-4">
-                <Button 
-                  variant="outline" 
-                  className="flex-1 h-14 border-white/10 hover:bg-emerald-500/10 hover:text-emerald-500 font-black uppercase text-xs tracking-widest"
-                  onClick={() => onAction(transaction.id, 'approved')}
-                >
-                  Approve Case
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  className="flex-1 h-14 font-black uppercase text-xs tracking-widest shadow-xl"
-                  onClick={() => onAction(transaction.id, 'blocked')}
-                >
-                  Block Case
-                </Button>
-              </div>
-            )}
+          <div className="w-48 h-48 bg-destructive/5 rounded-full flex items-center justify-center border border-destructive/10 relative overflow-hidden">
+             {/* Mocking the polygon area in the screenshot */}
+             <div className="w-32 h-32 bg-destructive/20 clip-polygon animate-pulse" style={{ clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)' }} />
+             {isScanning && <Loader2 className="w-8 h-8 text-destructive animate-spin absolute" />}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <Card className="cyber-card border-accent/20 bg-accent/5">
-        <CardHeader className="pb-6">
-          <CardTitle className="text-sm font-black uppercase tracking-[0.4em] text-accent flex items-center gap-4">
-            <Cpu className="w-6 h-6" />
-            Adaptive Model Governance
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-            <div className="space-y-4">
-              <span className="text-[10px] font-mono text-muted-foreground uppercase font-black tracking-widest">Engine Mode</span>
-              <p className="text-sm font-black">Hybrid Behavioral + Rule</p>
-            </div>
-            <div className="space-y-4">
-              <span className="text-[10px] font-mono text-muted-foreground uppercase font-black tracking-widest">Learning Status</span>
-              <p className="text-sm font-black">Active (Adaptive)</p>
-            </div>
-            <div className="space-y-4">
-              <span className="text-[10px] font-mono text-muted-foreground uppercase font-black tracking-widest">Drift Integrity</span>
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <p className="text-sm font-black text-emerald-500 uppercase tracking-widest">STABLE</p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <span className="text-[10px] font-mono text-muted-foreground uppercase font-black tracking-widest">Last Profile Update</span>
-              <p className="text-sm font-black">Real-time (Stream)</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t">
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <Info className="w-3 h-3" />
+              Explainability Report
+            </h4>
+            <div className="p-4 rounded-xl bg-muted/30 text-[11px] leading-relaxed font-medium italic border text-muted-foreground min-h-[120px]">
+              {isScanning ? "Generating neural narrative..." : transaction.explanation}
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <Clock className="w-3 h-3" />
+              User Activity Timeline
+            </h4>
+            <div className="space-y-3">
+              {userHistory.map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground font-bold">{mounted ? format(new Date(tx.timestamp), 'HH:mm:ss') : '--:--:--'}</span>
+                  <span className="font-bold">₹{tx.amount.toLocaleString()}</span>
+                  <Badge variant={tx.riskLevel === 'high' ? 'destructive' : 'secondary'} className="text-[8px] px-1.5 h-4">
+                    {tx.riskLevel?.toUpperCase()}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 pt-8 border-t">
+          <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+            <MessageSquare className="w-3 h-3" />
+            Analyst Investigation Notes
+          </h4>
+          <textarea 
+            className="w-full bg-muted/20 border rounded-xl p-4 text-[11px] min-h-[100px] focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+            placeholder="Enter case notes..."
+            value={transaction.analystNotes || ""}
+            onChange={(e) => onUpdateNotes(transaction.id, e.target.value)}
+          />
+        </div>
+
+        {!isScanning && transaction.investigationStatus === 'pending' && (
+          <div className="flex gap-4 pt-6">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-12 text-[10px] font-bold uppercase tracking-widest"
+              onClick={() => onAction(transaction.id, 'approved')}
+            >
+              Approve Case
+            </Button>
+            <Button 
+              variant="destructive" 
+              className="flex-1 h-12 text-[10px] font-bold uppercase tracking-widest"
+              onClick={() => onAction(transaction.id, 'blocked')}
+            >
+              Block Case
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

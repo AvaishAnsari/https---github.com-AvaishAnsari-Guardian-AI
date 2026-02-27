@@ -29,8 +29,7 @@ export function StatCards({ transactions }: { transactions: Transaction[] }) {
       label: "Institutional Baseline",
       icon: Target,
       color: "text-emerald-500",
-      bg: "bg-emerald-500/10",
-      trend: { up: true, val: "+0.4%" }
+      trend: "+0.4%"
     },
     {
       title: "False Positive Rate",
@@ -38,31 +37,28 @@ export function StatCards({ transactions }: { transactions: Transaction[] }) {
       label: "Model Precision",
       icon: BarChart3,
       color: "text-primary",
-      bg: "bg-primary/10",
-      trend: { up: false, val: "-1.2%" }
+      trend: "-1.2%"
     },
     {
       title: "Fraud Prevented",
       value: `₹${(protectedCapital / 100000).toFixed(1)}L`,
       label: "Business Value",
       icon: DollarSign,
-      color: "text-accent",
-      bg: "bg-accent/10",
-      trend: { up: true, val: "+14%" }
+      color: "text-primary",
+      trend: "+14%"
     },
     {
-      title: "Efficiency Gain",
+      title: "Operational Efficiency",
       value: `${efficiencyGain}%`,
       label: "Review Time Saved",
       icon: Zap,
       color: "text-amber-500",
-      bg: "bg-amber-500/10",
-      trend: { up: true, val: "+8%" }
+      trend: "+8%"
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {stats.map((stat, i) => (
         <motion.div
           key={stat.title}
@@ -70,24 +66,25 @@ export function StatCards({ transactions }: { transactions: Transaction[] }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.1 }}
         >
-          <Card className="cyber-card relative overflow-hidden group">
-            <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110", stat.bg)} />
+          <Card className="cyber-card relative overflow-hidden group border-none shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{stat.title}</CardTitle>
-              <stat.icon className={cn("h-4 w-4", stat.color)} />
+              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stat.title}</CardTitle>
+              <div className={cn("p-1.5 rounded-lg bg-muted", stat.color.replace('text', 'bg').replace('500', '500/10'))}>
+                <stat.icon className={cn("h-4 w-4", stat.color)} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-baseline gap-2">
-                <div className="text-2xl font-black tracking-tighter">{stat.value}</div>
+              <div className="flex items-baseline gap-3">
+                <div className="text-2xl font-bold tracking-tight">{stat.value}</div>
                 <div className={cn(
                   "text-[10px] font-bold flex items-center gap-1",
-                  stat.trend.up ? "text-emerald-500" : "text-destructive"
+                  stat.trend.startsWith('+') ? "text-emerald-500" : "text-destructive"
                 )}>
-                  {stat.trend.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {stat.trend.val}
+                  {stat.trend.startsWith('+') ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {stat.trend}
                 </div>
               </div>
-              <p className="text-[9px] text-muted-foreground font-mono mt-1 opacity-70 uppercase tracking-widest">{stat.label}</p>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-1 font-medium">{stat.label}</p>
             </CardContent>
           </Card>
         </motion.div>

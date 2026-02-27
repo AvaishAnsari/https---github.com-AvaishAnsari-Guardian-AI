@@ -15,17 +15,17 @@ export function FraudTypology({ transactions }: { transactions: Transaction[] })
     }, {});
 
   const data = Object.entries(typologies).map(([name, value]) => ({ name, value }));
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--destructive))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+  const COLORS = ['hsl(var(--primary))', 'hsl(200, 100%, 71%)', 'hsl(var(--destructive))', 'hsl(280, 65%, 60%)', 'hsl(30, 80%, 55%)'];
 
   return (
-    <Card className="cyber-card border-white/5">
-      <CardHeader className="pb-2">
+    <Card className="cyber-card border-none shadow-sm">
+      <CardHeader className="pb-2 border-b">
         <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-          <BarChart3 className="w-4 h-4" />
+          <BarChart3 className="w-3 h-3" />
           Fraud Typology Distribution
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-[180px] p-0 flex items-center">
+      <CardContent className="h-[200px] p-0 flex items-center">
         <div className="w-1/2 h-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -33,9 +33,9 @@ export function FraudTypology({ transactions }: { transactions: Transaction[] })
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={40}
-                outerRadius={60}
-                paddingAngle={5}
+                innerRadius={50}
+                outerRadius={70}
+                paddingAngle={4}
                 dataKey="value"
               >
                 {data.map((entry, index) => (
@@ -43,19 +43,19 @@ export function FraudTypology({ transactions }: { transactions: Transaction[] })
                 ))}
               </Pie>
               <Tooltip 
-                contentStyle={{ backgroundColor: 'rgba(10, 10, 20, 0.9)', border: '1px solid rgba(255,255,255,0.1)', fontSize: '9px' }}
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '10px' }}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="w-1/2 pr-4 space-y-1">
+        <div className="w-1/2 pr-6 space-y-2">
           {data.map((item, i) => (
             <div key={item.name} className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 overflow-hidden">
-                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                <span className="text-[8px] font-mono text-muted-foreground truncate uppercase">{item.name}</span>
+              <div className="flex items-center gap-2 overflow-hidden">
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                <span className="text-[9px] font-medium text-muted-foreground truncate uppercase">{item.name}</span>
               </div>
-              <span className="text-[9px] font-bold">{Math.round((item.value / transactions.length) * 100)}%</span>
+              <span className="text-[10px] font-bold">{Math.round((item.value / transactions.length) * 100)}%</span>
             </div>
           ))}
         </div>

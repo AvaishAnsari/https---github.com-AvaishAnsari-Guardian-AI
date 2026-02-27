@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Transaction, UserProfile, InvestigationStatus, FraudCategory, SystemConfig, UserRole, RiskBreakdown } from "@/lib/types";
+import { Transaction, UserProfile, FraudCategory, SystemConfig, UserRole, RiskBreakdown } from "@/lib/types";
 import { INITIAL_TRANSACTIONS, MOCK_PROFILES } from "@/lib/mock-data";
 import { engineerFeatures } from "@/lib/feature-engineering";
 import { calculateFraudRisk } from "@/ai/flows/ai-powered-transaction-risk-scoring-flow";
@@ -10,18 +10,16 @@ import { TransactionFeed } from "@/components/dashboard/TransactionFeed";
 import { AnalysisPanel } from "@/components/dashboard/AnalysisPanel";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { TransactionInputForm } from "@/components/dashboard/TransactionInputForm";
-import { RiskTrendChart } from "@/components/dashboard/RiskTrendChart";
 import { FraudAlertNotification } from "@/components/dashboard/FraudAlertNotification";
 import { SpatialHeatmap } from "@/components/dashboard/SpatialHeatmap";
 import { FraudTypology } from "@/components/dashboard/FraudTypology";
-import { AdminSettings } from "@/components/dashboard/AdminSettings";
 import { Button } from "@/components/ui/button";
-import { Shield, Radar, Zap, ShieldAlert, Sun, Moon, ArrowRightLeft } from "lucide-react";
+import { Shield, ShieldAlert, Sun, Moon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 export default function FraudShieldDashboard() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>(MOCK_PROFILES);
   const [role, setRole] = useState<UserRole>('analyst');
   const [config, setConfig] = useState<SystemConfig>({
@@ -67,20 +65,9 @@ export default function FraudShieldDashboard() {
     }
   }, [transactions, selectedTxId]);
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('fraudshield-theme') as 'light' | 'dark';
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
-
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('fraudshield-theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
@@ -267,13 +254,6 @@ export default function FraudShieldDashboard() {
     }
 
     setAlertTx(null);
-    if (status === 'blocked') {
-      toast({
-        title: "Threat Neutralized",
-        description: "Transaction blocked. Intelligence distributed to institutional nodes.",
-        variant: "destructive"
-      });
-    }
   };
 
   const handleUpdateNotes = (id: string, notes: string) => {
@@ -281,49 +261,38 @@ export default function FraudShieldDashboard() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden selection:bg-primary/30">
-      <header className="flex h-20 items-center justify-between border-b border-foreground/5 px-8 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
-        <div className="flex items-center gap-6">
-          <motion.div 
-            initial={{ rotate: -180, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
-            className="bg-primary/20 p-3 rounded-xl border border-primary/30"
-          >
-            <Shield className="h-8 w-8 text-primary" />
-          </motion.div>
+    <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
+      <header className="flex h-16 items-center justify-between border-b bg-card px-8 shrink-0">
+        <div className="flex items-center gap-4">
+          <Shield className="h-6 w-6 text-primary" />
           <div className="flex flex-col">
-            <h1 className="text-2xl font-black tracking-widest bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase leading-none">
+            <h1 className="text-lg font-bold tracking-tight text-primary uppercase leading-none">
               FraudShield AI
             </h1>
-            <span className="text-[10px] font-mono text-muted-foreground tracking-[0.4em] uppercase opacity-60 mt-1">
-              Adaptive Intelligence Mesh v3.2.0 | {role.replace('_', ' ')}
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest opacity-70">
+              Enterprise Hub v3.2.0 | {role} Active
             </span>
           </div>
         </div>
         
-        <div className="flex items-center gap-6">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleTheme}
-            className="rounded-full w-10 h-10 hover:bg-foreground/5"
-          >
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
 
-          <div className="flex bg-foreground/5 rounded-full p-1 border border-foreground/5">
+          <div className="flex bg-muted rounded-lg p-1">
             <Button 
-              variant={role === 'analyst' ? 'default' : 'ghost'} 
+              variant={role === 'analyst' ? 'primary' : 'ghost'} 
               size="sm" 
-              className="h-8 text-xs font-bold uppercase rounded-full px-4"
+              className="h-7 text-[10px] font-bold uppercase"
               onClick={() => setRole('analyst')}
             >
               Analyst
             </Button>
             <Button 
-              variant={role === 'risk_manager' ? 'default' : 'ghost'} 
+              variant={role === 'risk_manager' ? 'primary' : 'ghost'} 
               size="sm" 
-              className="h-8 text-xs font-bold uppercase rounded-full px-4"
+              className="h-7 text-[10px] font-bold uppercase"
               onClick={() => setRole('risk_manager')}
             >
               Manager
@@ -333,32 +302,27 @@ export default function FraudShieldDashboard() {
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex items-center gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 transition-all font-mono text-xs uppercase tracking-widest h-10 px-6"
+            className="border-destructive/30 text-destructive hover:bg-destructive/10 text-[10px] font-bold uppercase h-8"
             onClick={() => handleProcessTransaction('USER_002', 145000, "London", "vivo_x100")}
-            disabled={isProcessing}
           >
-            <ShieldAlert className="h-4 w-4" />
-            Trigger_Simulation
+            <ShieldAlert className="h-3 w-3 mr-2" />
+            Simulate_Fraud
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden p-6">
+      <main className="flex-1 overflow-hidden p-6 bg-[#f8f9fc]">
         <div className="mx-auto max-w-[1600px] h-full flex flex-col gap-6">
-          
           <StatCards transactions={transactions} />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
-            <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 min-h-0">
-              {role === 'risk_manager' ? (
-                <AdminSettings config={config} onUpdate={setConfig} />
-              ) : (
-                <TransactionInputForm 
-                  profiles={profiles}
-                  onAddTransaction={handleProcessTransaction} 
-                  isLoading={isProcessing} 
-                />
-              )}
+            {/* Left Column */}
+            <div className="lg:col-span-3 flex flex-col gap-6 min-h-0">
+              <TransactionInputForm 
+                profiles={profiles}
+                onAddTransaction={handleProcessTransaction} 
+                isLoading={isProcessing} 
+              />
               <div className="flex-1 min-h-0">
                 <TransactionFeed 
                   transactions={transactions} 
@@ -367,49 +331,25 @@ export default function FraudShieldDashboard() {
               </div>
             </div>
 
-            <div className="lg:col-span-8 xl:col-span-9 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                <div className="xl:col-span-8 space-y-6">
-                  <AnalysisPanel 
-                    transaction={selectedTransaction} 
-                    profile={selectedProfile}
-                    history={transactions}
-                    onAction={handleAction}
-                    onUpdateNotes={handleUpdateNotes}
-                  />
-                  <RiskTrendChart transactions={transactions} />
-                </div>
-                
-                <div className="xl:col-span-4 space-y-6">
-                  <FraudTypology transactions={transactions} />
-                  
-                  <motion.div className="cyber-card p-6 rounded-2xl space-y-4">
-                    <h4 className="text-xs font-bold tracking-[0.3em] uppercase text-primary flex items-center gap-3">
-                      <Radar className="w-4 h-4" />
-                      Tactical Threat Radar
-                    </h4>
-                    <SpatialHeatmap transaction={selectedTransaction} history={transactions} />
-                  </motion.div>
+            {/* Middle Column */}
+            <div className="lg:col-span-6 min-h-0">
+              <AnalysisPanel 
+                transaction={selectedTransaction} 
+                profile={selectedProfile}
+                history={transactions}
+                onAction={handleAction}
+                onUpdateNotes={handleUpdateNotes}
+              />
+            </div>
 
-                  <motion.div className="cyber-card p-6 rounded-2xl space-y-4">
-                    <h4 className="text-xs font-bold tracking-[0.3em] uppercase text-accent flex items-center gap-3">
-                      <Zap className="w-4 h-4" />
-                      Intelligence Network
-                    </h4>
-                    <div className="space-y-4">
-                      <div className="p-5 rounded-xl bg-foreground/5 border border-foreground/5 space-y-3">
-                        <span className="text-[10px] font-mono text-muted-foreground uppercase flex items-center gap-3 font-bold">
-                          <ArrowRightLeft className="w-4 h-4" />
-                          Device Reuse Analysis
-                        </span>
-                        <div className="flex justify-between items-end">
-                          <span className="text-4xl font-black">{Object.keys(deviceRegistry).filter(d => deviceRegistry[d].length > 1).length}</span>
-                          <span className="text-[10px] text-destructive font-black tracking-[0.2em]">NODES_REUSED</span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
+            {/* Right Column */}
+            <div className="lg:col-span-3 flex flex-col gap-6 min-h-0">
+              <FraudTypology transactions={transactions} />
+              <div className="flex-1 cyber-card p-6">
+                <h4 className="text-[10px] font-bold tracking-widest uppercase text-primary flex items-center gap-2 mb-4">
+                  Tactical Threat Radar
+                </h4>
+                <SpatialHeatmap transaction={selectedTransaction} history={transactions} />
               </div>
             </div>
           </div>
